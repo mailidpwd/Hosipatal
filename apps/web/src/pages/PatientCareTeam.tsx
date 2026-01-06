@@ -71,12 +71,12 @@ const AppreciationRewardModal = ({ data, onClose }: { data: AppreciationModalDat
 
     if (!userId) {
       console.error('[AppreciationModal] ❌ No userId available');
-      toast.error('Please log in to send a tip');
+      // toast.error('Please log in to send a tip');
       return;
     }
 
     if (selectedAmount <= 0) {
-      toast.error('Please select an amount greater than 0');
+      // toast.error('Please select an amount greater than 0');
       return;
     }
 
@@ -112,7 +112,7 @@ const AppreciationRewardModal = ({ data, onClose }: { data: AppreciationModalDat
       
       console.log('[AppreciationModal] ✅ Invalidated provider queries for staff-1 (Dr. Sarah Smith)');
 
-      toast.success(`Thank you message sent! ${selectedAmount} RDM sent to ${data.name}`);
+      // toast.success(`Thank you message sent! ${selectedAmount} RDM sent to ${data.name}`);
       
       // Reset form
       setMessage('');
@@ -130,7 +130,7 @@ const AppreciationRewardModal = ({ data, onClose }: { data: AppreciationModalDat
         stack: error?.stack,
         response: error?.response,
       });
-      toast.error(error?.message || 'Failed to send tip. Please try again.');
+      // toast.error(error?.message || 'Failed to send tip. Please try again.');
       setIsSubmitting(false); // Reset submitting state on error
     }
   };
@@ -278,7 +278,7 @@ const ExperienceRatingModal = ({ onClose }: { onClose: () => void }) => {
   const handleSubmitRating = async () => {
     if (!userId) {
       console.error('[RatingModal] ❌ No userId available');
-      toast.error('Please log in to submit a rating');
+      // toast.error('Please log in to submit a rating');
       return;
     }
 
@@ -311,11 +311,11 @@ const ExperienceRatingModal = ({ onClose }: { onClose: () => void }) => {
       
       console.log('[RatingModal] ✅ Invalidated provider queries for staff-1 (Dr. Sarah Smith)');
 
-      toast.success(`Rating submitted! ${rdmAmount > 0 ? `${rdmAmount} RDM earned.` : 'Thank you for your feedback.'}`);
+      // toast.success(`Rating submitted! ${rdmAmount > 0 ? `${rdmAmount} RDM earned.` : 'Thank you for your feedback.'}`);
       onClose();
     } catch (error: any) {
       console.error('Error submitting rating:', error);
-      toast.error(error?.message || 'Failed to submit rating. Please try again.');
+      // toast.error(error?.message || 'Failed to submit rating. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

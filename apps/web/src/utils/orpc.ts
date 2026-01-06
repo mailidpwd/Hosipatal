@@ -10,15 +10,16 @@ import { toast } from "sonner";
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
-      // Only show toast for user-initiated actions, not background fetches
-      if (!query.meta?.silent) {
-        toast.error(`Error: ${error.message}`, {
-          action: {
-            label: "retry",
-            onClick: query.invalidate,
-          },
-        });
-      }
+      // Notifications disabled
+      // if (!query.meta?.silent) {
+      //   toast.error(`Error: ${error.message}`, {
+      //     action: {
+      //       label: "retry",
+      //       onClick: query.invalidate,
+      //     },
+      //   });
+      // }
+      console.error('[QueryCache] Error:', error.message);
     },
   }),
   defaultOptions: {
