@@ -42,7 +42,7 @@ import { ToastContainer } from '@/components/UI';
 const AppContent = () => {
   const [role, setRole] = React.useState<UserRole>(UserRole.NONE);
   const [currentPage, setCurrentPage] = React.useState<Page>(Page.P_DASHBOARD);
-  const { notifications, dismissNotification } = useRealTime();
+  // const { notifications, dismissNotification } = useRealTime(); // Removed - notifications disabled
   const { navigationState } = useNavigation();
   const { user, logout: authLogout } = useAuth();
 
@@ -195,7 +195,7 @@ const AppContent = () => {
       <DataProvider>
         {renderContent()}
       </DataProvider>
-      <ToastContainer notifications={notifications} onDismiss={dismissNotification} />
+      {/* <ToastContainer notifications={notifications} onDismiss={dismissNotification} /> */}
       <ConnectionStatus />
     </Layout>
   );
