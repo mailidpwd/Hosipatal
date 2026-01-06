@@ -1857,10 +1857,13 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                     );
 
                     if (pledge) {
-                      // Store pledge in sessionStorage for demo mode
+                      // Store pledge in both sessionStorage and localStorage for demo mode
+                      // localStorage persists across logout/role switches, sessionStorage for immediate access
                       try {
-                        const storedPledges = sessionStorage.getItem('demo_pledges');
-                        const pledges = storedPledges ? JSON.parse(storedPledges) : [];
+                        const storedS = sessionStorage.getItem('demo_pledges');
+                        const storedL = localStorage.getItem('demo_pledges');
+                        const sPledges = storedS ? JSON.parse(storedS) : [];
+                        const lPledges = storedL ? JSON.parse(storedL) : [];
                         
                         // Ensure patientId is set correctly (use '83921' for Michael Chen)
                         const normalizedPledge = {
@@ -1868,13 +1871,21 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                           patientId: '83921', // Always use '83921' for Michael Chen in demo mode
                         };
                         
-                        pledges.push(normalizedPledge);
-                        sessionStorage.setItem('demo_pledges', JSON.stringify(pledges));
-                        console.log('[ProviderPatients] ✅ Stored pledge in sessionStorage:', {
-                          pledgeId: normalizedPledge.id,
+                        sPledges.push(normalizedPledge);
+                        lPledges.push(normalizedPledge);
+                        
+                        sessionStorage.setItem('demo_pledges', JSON.stringify(sPledges));
+                        localStorage.setItem('demo_pledges', JSON.stringify(lPledges));
+                        
+                        // Dispatch custom event for same-tab listeners (storage event only fires cross-tab)
+                        window.dispatchEvent(new Event('demo_pledges_updated'));
+                        
+                        console.log('[ProviderPatients] ✅ Saved pledge to sessionStorage + localStorage:', {
+                          id: normalizedPledge.id,
                           patientId: normalizedPledge.patientId,
                           goal: normalizedPledge.goal,
-                          allPledges: pledges.length,
+                          totalSession: sPledges.length,
+                          totalLocal: lPledges.length,
                         });
                       } catch (e) {
                         console.warn('[ProviderPatients] Failed to store pledge:', e);

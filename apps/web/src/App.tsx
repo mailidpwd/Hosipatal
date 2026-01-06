@@ -83,13 +83,13 @@ const AppContent = () => {
       // Call auth context logout to clear user and cache
       await authLogout();
       
-      // Clear all sessionStorage data
+      // Clear all sessionStorage data (but keep demo_pledges for cross-role demo switching)
       try {
         sessionStorage.removeItem('userId');
         sessionStorage.removeItem('providerId');
         sessionStorage.removeItem('adminId');
-        sessionStorage.removeItem('demo_pledges');
-        console.log('[App] ✅ Cleared sessionStorage on logout');
+        // DO NOT clear demo_pledges here - needed for demo cross-role switch
+        console.log('[App] ✅ Cleared sessionStorage on logout (kept demo_pledges)');
       } catch (e) {
         console.warn('[App] Failed to clear sessionStorage:', e);
       }
@@ -101,9 +101,15 @@ const AppContent = () => {
       console.log('[App] ✅ Logout completed');
     } catch (error: any) {
       console.error('[App] Logout error:', error);
-      // Even if logout fails, clear everything locally
+      // Even if logout fails, clear everything locally (but preserve demo_pledges)
       try {
+        // Preserve demo_pledges before clearing
+        const demoPledges = sessionStorage.getItem('demo_pledges');
         sessionStorage.clear();
+        // Restore demo_pledges if it existed
+        if (demoPledges) {
+          sessionStorage.setItem('demo_pledges', demoPledges);
+        }
       } catch (e) {
         // Ignore
       }

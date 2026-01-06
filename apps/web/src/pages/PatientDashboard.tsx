@@ -95,6 +95,35 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
 
   const [appointmentTime] = useState<Date>(() => getAppointmentTime());
 
+  // Helper to read pledges from both sessionStorage and localStorage
+  const readPledgesFromStorage = (): Pledge[] => {
+    try {
+      const s = sessionStorage.getItem('demo_pledges');
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('[PatientDashboard] Failed to read from sessionStorage:', e);
+    }
+    
+    try {
+      const l = localStorage.getItem('demo_pledges');
+      if (l) {
+        const parsed = JSON.parse(l);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('[PatientDashboard] Failed to read from localStorage:', e);
+    }
+    
+    return [];
+  };
+
   // Get patient ID - try multiple formats to match with pledges
   const getPatientId = () => {
     if (!user?.id) return null;
@@ -166,12 +195,11 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
         }
         return result;
       } catch (error: any) {
-        console.warn('[PatientDashboard] API call failed, checking sessionStorage:', error?.message);
-        // Demo mode fallback - check sessionStorage
+        console.warn('[PatientDashboard] API call failed, checking storage:', error?.message);
+        // Demo mode fallback - check both sessionStorage and localStorage
         try {
-          const storedPledges = sessionStorage.getItem('demo_pledges');
-          if (storedPledges) {
-            const pledges = JSON.parse(storedPledges);
+          const pledges = readPledgesFromStorage();
+          if (pledges.length > 0) {
             console.log('[PatientDashboard] 📦 All stored pledges:', pledges);
             console.log('[PatientDashboard] 🔍 Looking for patientId:', patientId);
             
@@ -207,7 +235,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
             });
             
             if (userPledges.length > 0) {
-              console.log('[PatientDashboard] ✅ Found', userPledges.length, 'pledge(s) in sessionStorage');
+              console.log('[PatientDashboard] ✅ Found', userPledges.length, 'pledge(s) in storage');
               return userPledges;
             } else {
               console.log('[PatientDashboard] ⚠️ No matching pledges found. Stored pledges:', pledges.map((p: Pledge) => ({
@@ -217,7 +245,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
               })));
             }
           } else {
-            console.log('[PatientDashboard] ⚠️ No stored pledges in sessionStorage');
+            console.log('[PatientDashboard] ⚠️ No stored pledges in sessionStorage or localStorage');
           }
         } catch (e) {
           console.warn('[PatientDashboard] Failed to parse stored pledges:', e);
@@ -247,6 +275,31 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
       });
     }
   }, [pledgesQuery.isFetching, pledgesQuery.data, pledgesQuery.error]);
+
+  // Listen for storage changes (when pledges are created in another tab/role)
+  React.useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'demo_pledges') {
+        console.log('[PatientDashboard] 🔔 Storage change detected, refetching pledges...');
+        pledgesQuery.refetch();
+      }
+    };
+
+    // Also listen for custom events (for same-tab updates)
+    const handleCustomStorageChange = () => {
+      console.log('[PatientDashboard] 🔔 Custom storage change detected, refetching pledges...');
+      pledgesQuery.refetch();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Listen for custom event dispatched when localStorage is updated in same tab
+    window.addEventListener('demo_pledges_updated', handleCustomStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('demo_pledges_updated', handleCustomStorageChange);
+    };
+  }, [pledgesQuery]);
 
 
 
