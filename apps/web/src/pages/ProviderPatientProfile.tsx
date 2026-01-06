@@ -23,8 +23,8 @@ const getDemoPatientProfile = (patientId: string) => {
       rdmEarnings: 1250,
       status: 'critical',
       avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
-      contactNumber: '+1-555-0123',
       email: 'michael.chen@rdmhealth.patient',
+      contactNumber: '+1-555-0123',
       address: '123 Health St, Medical City, MC 12345',
       emergencyContact: {
         name: 'Jane Chen',

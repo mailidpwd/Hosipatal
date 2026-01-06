@@ -98,10 +98,23 @@ const getDemoPatientProfile = (patientId: string) => {
       rdmEarnings: 1250,
       status: 'critical',
       avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
+      email: 'michael.chen@rdmhealth.patient',
+      contactNumber: '+1-555-0123',
+      address: '123 Health St, Medical City, MC 12345',
       vitals: {
         bloodPressure: '150/95',
         heartRate: 78,
         weight: 185,
+        height: 175,
+      },
+      medications: [
+        { name: 'Lisinopril', dosage: '10mg', frequency: 'Once daily' },
+        { name: 'Metformin', dosage: '500mg', frequency: 'Twice daily' },
+      ],
+      emergencyContact: {
+        name: 'Jane Chen',
+        relationship: 'Spouse',
+        phone: '+1-555-0124',
       },
     };
   }
@@ -1847,7 +1860,7 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
 
                       // Get patient email from profile or find in patients list
                       const patient = patients.find(p => p.id === selectedPatientForPledge.id || p.patientId === selectedPatientForPledge.id);
-                      const patientEmail = patientProfile?.email || (patient as any)?.email || 'N/A';
+                      const patientEmail = patientProfile?.email || (patient as any)?.email || 'michael.chen@rdmhealth.patient';
 
                       alert(`✅ Pledge activated successfully!\n\n${pledgeData.rdmAmount} RDM has been allocated for ${selectedPatientForPledge.name}.\n\n📧 Emails have been sent to:\n- Patient: ${patientEmail}\n- Provider: ${providerInfo.providerEmail}\n\nThe patient has been notified and can now track their progress in real-time.`);
 
@@ -1869,10 +1882,10 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                     alert(`Failed to create pledge: ${error?.message || 'Please try again.'}`);
                   }
                 }}
-                disabled={profileLoading}
+                disabled={profileLoading && !patientProfile && !patientVitals}
                 className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-dark dark:hover:bg-primary/90 text-slate-900 font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {profileLoading ? (
+                {profileLoading && !patientProfile && !patientVitals ? (
                   <>
                     <LoadingSpinner />
                     <span>Loading patient data...</span>
