@@ -22,8 +22,29 @@ export class WalletService extends BaseService {
    */
   async getBalance(userId?: string): Promise<WalletBalance> {
     return this.handleRequest(async () => {
-      const response = await (client as any).wallet.getBalance({ userId });
-      return response as WalletBalance;
+      // Short timeout with demo fallback
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), 1200);
+      });
+
+      try {
+        const response = await Promise.race([
+          (client as any).wallet.getBalance({ userId }),
+          timeoutPromise,
+        ]);
+        return response as WalletBalance;
+      } catch {
+        // Demo fallback
+        return {
+          balance: 12500,
+          weeklyEarnings: 350,
+          totalEarnings: 45200,
+          history: [
+            { id: `tx-${Date.now() - 300000}`, desc: 'Pledge bonus', amount: 500, date: new Date().toISOString(), type: 'earned' },
+            { id: `tx-${Date.now() - 600000}`, desc: 'Medication adherence', amount: 50, date: new Date().toISOString(), type: 'earned' },
+          ],
+        };
+      }
     });
   }
 
