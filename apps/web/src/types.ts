@@ -1,0 +1,48 @@
+export enum UserRole {
+  PATIENT = 'PATIENT',
+  STAFF = 'STAFF',
+  ADMIN = 'ADMIN',
+  NONE = 'NONE'
+}
+
+export enum Page {
+  // Patient Pages
+  P_DASHBOARD = 'P_DASHBOARD',
+  P_GOALS = 'P_GOALS',
+  P_ROUTINE = 'P_ROUTINE',
+  P_VITALS = 'P_VITALS',
+  P_MEDS = 'P_MEDS',
+  P_CARE_TEAM = 'P_CARE_TEAM',
+  P_MARKETPLACE = 'P_MARKETPLACE',
+  P_EARN = 'P_EARN',
+  P_APPOINTMENT_HISTORY = 'P_APPOINTMENT_HISTORY',
+
+  // Staff Pages
+  S_DASHBOARD = 'S_DASHBOARD',
+  S_PATIENTS = 'S_PATIENTS',
+  S_MARKETPLACE = 'S_MARKETPLACE',
+  S_PATIENT_PROFILE = 'S_PATIENT_PROFILE',
+  S_CLAIMS_NLP = 'S_CLAIMS_NLP',
+  S_EARNINGS = 'S_EARNINGS',
+  S_SETTINGS = 'S_SETTINGS',
+
+  // Admin Pages
+  A_DASHBOARD = 'A_DASHBOARD',
+  A_STAFF = 'A_STAFF',
+  A_PATIENTS = 'A_PATIENTS',
+  S_COMMAND_CENTER = 'S_COMMAND_CENTER',
+  A_VERIFICATIONS = 'A_VERIFICATIONS',
+  A_LEADERBOARD = 'A_LEADERBOARD',
+  A_TOKEN_ECONOMY = 'A_TOKEN_ECONOMY',
+  A_DEPT_ANALYTICS = 'A_DEPT_ANALYTICS',
+  A_SETTINGS = 'A_SETTINGS'
+}
+
+export interface NavItem {
+  label: string;
+  icon: string;
+  page: Page;
+  mobileLabel?: string;
+  badge?: string;
+}
+

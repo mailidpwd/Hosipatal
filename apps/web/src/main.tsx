@@ -1,34 +1,27 @@
-import { QueryClientProvider } from "@tanstack/react-query";
-import { RouterProvider, createRouter } from "@tanstack/react-router";
-import ReactDOM from "react-dom/client";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
 
-import Loader from "./components/loader";
-import { routeTree } from "./routeTree.gen";
-import { orpc, queryClient } from "./utils/orpc";
-
-const router = createRouter({
-  routeTree,
-  defaultPreload: "intent",
-  defaultPendingComponent: () => <Loader />,
-  context: { orpc, queryClient },
-  Wrap: function WrapComponent({ children }: { children: React.ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
-  },
-});
-
-declare module "@tanstack/react-router" {
-  interface Register {
-    router: typeof router;
-  }
-}
-
-const rootElement = document.getElementById("app");
-
+const rootElement = document.getElementById('root');
 if (!rootElement) {
-  throw new Error("Root element not found");
+  throw new Error("Could not find root element to mount to");
 }
 
-if (!rootElement.innerHTML) {
+try {
   const root = ReactDOM.createRoot(rootElement);
-  root.render(<RouterProvider router={router} />);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+} catch (error) {
+  console.error('Failed to render app:', error);
+  rootElement.innerHTML = `
+    <div style="padding: 20px; font-family: sans-serif;">
+      <h1>Error Loading App</h1>
+      <pre>${error instanceof Error ? error.message : String(error)}</pre>
+      <p>Check the browser console for more details.</p>
+    </div>
+  `;
 }

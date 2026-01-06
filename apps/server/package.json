@@ -10,21 +10,24 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "hono": "catalog:",
     "@hono/node-server": "^1.14.4",
-    "@orpc/server": "catalog:",
+    "@hosipatal/api": "workspace:*",
+    "@hosipatal/env": "workspace:*",
     "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
     "dotenv": "catalog:",
-    "zod": "catalog:",
-    "@hosipatal/env": "workspace:*",
-    "@hosipatal/api": "workspace:*"
+    "hono": "catalog:",
+    "mongodb": "^7.0.0",
+    "ws": "^8.18.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "tsx": "^4.19.2",
+    "@hosipatal/config": "workspace:*",
     "@types/node": "^22.13.14",
-    "typescript": "catalog:",
+    "@types/ws": "^8.5.13",
     "tsdown": "^0.16.5",
-    "@hosipatal/config": "workspace:*"
+    "tsx": "^4.19.2",
+    "typescript": "catalog:"
   }
 }
