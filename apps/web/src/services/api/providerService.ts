@@ -235,53 +235,64 @@ export class ProviderService extends BaseService {
       providerEmail?: string;
     }
   ): Promise<Pledge | null> {
+    // For demo mode (Michael Chen), return immediately without API call
+    if (patientId === '83921' || patientId?.includes('83921')) {
+      console.log('[ProviderService] Using demo pledge data for Michael Chen (immediate return)');
+      const durationDays = parseInt(options?.duration || '7');
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + durationDays);
+      
+      return {
+        id: `pledge-${Date.now()}`,
+        patientId: patientId,
+        patientName: 'Michael Chen',
+        goal: goal,
+        amount: amount,
+        status: 'pending' as const,
+        progress: 0,
+        totalDays: durationDays,
+        timestamp: new Date().toISOString(),
+        message: options?.message,
+        metricType: options?.metricType,
+        target: options?.target,
+        duration: options?.duration,
+        providerId: options?.providerId || 'staff-1',
+        providerName: options?.providerName || 'Dr. Sarah Smith',
+        providerEmail: options?.providerEmail || 'doctor@rdmhealth.com',
+        accepted: false,
+        acceptedAt: null,
+        startDate: null,
+        endDate: endDate.toISOString(),
+      } as Pledge;
+    }
+
+    // For real API calls, use handleRequest with timeout
     return this.handleRequest(async () => {
       try {
-        const response = await (client as any).provider.createPledge({ 
-          patientId, 
-          amount, 
-          goal,
-          message: options?.message,
-          metricType: options?.metricType,
-          target: options?.target,
-          duration: options?.duration,
-          providerId: options?.providerId,
-          providerName: options?.providerName,
-          providerEmail: options?.providerEmail,
+        // Very short timeout for real API calls (500ms)
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 500);
         });
-        return response as Pledge | null;
-      } catch (error: any) {
-        // Demo mode fallback - return mock pledge for Michael Chen
-        if (patientId === '83921' || patientId?.includes('83921')) {
-          console.log('[ProviderService] Using demo pledge data for Michael Chen');
-          const durationDays = parseInt(options?.duration || '7');
-          const endDate = new Date();
-          endDate.setDate(endDate.getDate() + durationDays);
-          
-          return {
-            id: `pledge-${Date.now()}`,
-            patientId: patientId,
-            patientName: 'Michael Chen',
-            goal: goal,
-            amount: amount,
-            status: 'pending' as const,
-            progress: 0,
-            totalDays: durationDays,
-            timestamp: new Date().toISOString(),
+        
+        const response = await Promise.race([
+          (client as any).provider.createPledge({ 
+            patientId, 
+            amount, 
+            goal,
             message: options?.message,
             metricType: options?.metricType,
             target: options?.target,
             duration: options?.duration,
-            providerId: options?.providerId || 'staff-1',
-            providerName: options?.providerName || 'Dr. Sarah Smith',
-            providerEmail: options?.providerEmail || 'doctor@rdmhealth.com',
-            accepted: false,
-            acceptedAt: null,
-            startDate: null,
-            endDate: endDate.toISOString(),
-          } as Pledge;
-        }
-        throw error; // Re-throw if not demo patient
+            providerId: options?.providerId,
+            providerName: options?.providerName,
+            providerEmail: options?.providerEmail,
+          }),
+          timeoutPromise,
+        ]);
+        return response as Pledge | null;
+      } catch (error: any) {
+        // If not demo patient, throw error
+        throw error;
       }
     });
   }
