@@ -12,7 +12,7 @@ import { logger } from "hono/logger";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { createServer } from "http";
 import { WebSocketServer } from "ws";
-import { connectToDatabase, testConnection } from "./db";
+import { testConnection } from "./db";
 
 const app = new Hono();
 
@@ -66,7 +66,7 @@ app.use("/*", async (c, next) => {
   });
 
   if (rpcResult.matched) {
-    return c.newResponse(rpcResult.response.body, rpcResult.response);
+    return c.newResponse((rpcResult.response as any).body, rpcResult.response as any);
   }
 
   const apiResult = await apiHandler.handle(c.req.raw, {
@@ -75,7 +75,7 @@ app.use("/*", async (c, next) => {
   });
 
   if (apiResult.matched) {
-    return c.newResponse(apiResult.response.body, apiResult.response);
+    return c.newResponse((apiResult.response as any).body, apiResult.response as any);
   }
 
   await next();
@@ -134,18 +134,18 @@ const httpServer = createServer(async (req, res) => {
       }
     };
 
-    sendSSE({ 
-      type: 'connected', 
-      timestamp: Date.now() 
+    sendSSE({
+      type: 'connected',
+      timestamp: Date.now()
     });
 
     // Keep connection alive with periodic heartbeats
     const interval = setInterval(() => {
       try {
         if (!res.destroyed && !res.closed) {
-          sendSSE({ 
-            type: 'heartbeat', 
-            timestamp: Date.now() 
+          sendSSE({
+            type: 'heartbeat',
+            timestamp: Date.now()
           });
         } else {
           clearInterval(interval);
@@ -185,7 +185,7 @@ const httpServer = createServer(async (req, res) => {
     // Build URL
     let url: string;
     try {
-      const protocol = req.socket.encrypted ? 'https' : 'http';
+      const protocol = (req.socket as any).encrypted ? 'https' : 'http';
       const host = req.headers.host || 'localhost:3000';
       url = `${protocol}://${host}${req.url}`;
     } catch (err: any) {
@@ -198,12 +198,12 @@ const httpServer = createServer(async (req, res) => {
     // Read body if present (for POST/PUT requests)
     let body: Buffer | undefined;
     const needsBody = req.method && req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS';
-    
+
     if (needsBody) {
       try {
         const chunks: Buffer[] = [];
         let bodyRead = false;
-        
+
         await new Promise<void>((resolve) => {
           const timeout = setTimeout(() => {
             if (!bodyRead) {
@@ -211,11 +211,11 @@ const httpServer = createServer(async (req, res) => {
               resolve(); // Resolve even if no body data
             }
           }, 100); // Short timeout for empty bodies
-          
+
           req.on('data', (chunk: Buffer) => {
             chunks.push(chunk);
           });
-          
+
           req.on('end', () => {
             clearTimeout(timeout);
             if (!bodyRead) {
@@ -226,7 +226,7 @@ const httpServer = createServer(async (req, res) => {
               resolve();
             }
           });
-          
+
           req.on('error', (err) => {
             clearTimeout(timeout);
             if (!bodyRead) {
@@ -250,9 +250,9 @@ const httpServer = createServer(async (req, res) => {
         Object.entries(req.headers).forEach(([key, value]) => {
           if (value) {
             if (typeof value === 'string') {
-              headers.set(key, value);
+              headers.append(key, value);
             } else if (Array.isArray(value)) {
-              headers.set(key, value.join(', '));
+              headers.append(key, value.join(', '));
             }
           }
         });
@@ -271,9 +271,9 @@ const httpServer = createServer(async (req, res) => {
         method: req.method || 'GET',
         headers,
       };
-      
+
       if (body) {
-        requestInit.body = body;
+        (requestInit as any).body = body;
       }
 
       request = new Request(url, requestInit);
@@ -287,7 +287,7 @@ const httpServer = createServer(async (req, res) => {
     // Get connection info for Hono
     let connInfo: any;
     try {
-      connInfo = getConnInfo(req, res);
+      connInfo = getConnInfo({ req, res } as any);
     } catch (err: any) {
       console.error('Error getting connInfo:', err);
       // Continue without connInfo - Hono should handle it
@@ -309,14 +309,14 @@ const httpServer = createServer(async (req, res) => {
 
     // Write status and headers
     if (!res.headersSent) {
-      res.statusCode = response.status;
-      response.headers.forEach((value, key) => {
+      res.statusCode = (response as any).status;
+      ((response as any).headers as Headers).forEach((value: string, key: string) => {
         // Skip problematic headers that Node.js handles
         const lowerKey = key.toLowerCase();
-        if (lowerKey !== 'content-encoding' && 
-            lowerKey !== 'transfer-encoding' && 
-            lowerKey !== 'connection' &&
-            lowerKey !== 'content-length') {
+        if (lowerKey !== 'content-encoding' &&
+          lowerKey !== 'transfer-encoding' &&
+          lowerKey !== 'connection' &&
+          lowerKey !== 'content-length') {
           try {
             res.setHeader(key, value);
           } catch (e) {
@@ -327,8 +327,8 @@ const httpServer = createServer(async (req, res) => {
     }
 
     // Stream response body
-    if (response.body) {
-      const reader = response.body.getReader();
+    if ((response as any).body) {
+      const reader = ((response as any).body as ReadableStream<Uint8Array>).getReader();
       const pump = async () => {
         try {
           while (true) {
@@ -379,41 +379,41 @@ const httpServer = createServer(async (req, res) => {
 });
 
 // WebSocket server - attach to the HTTP server
-const wss = new WebSocketServer({ 
+const wss = new WebSocketServer({
   server: httpServer,
   path: '/ws',
 });
 
 wss.on('connection', (ws, req) => {
   console.log('WebSocket client connected from:', req.socket.remoteAddress);
-  
+
   // Send welcome message
-  ws.send(JSON.stringify({ 
-    type: 'connected', 
-    timestamp: Date.now() 
+  ws.send(JSON.stringify({
+    type: 'connected',
+    timestamp: Date.now()
   }));
 
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message.toString());
       console.log('WebSocket message received:', data);
-      
+
       // Handle different message types
       if (data.type === 'ping') {
         ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
       } else if (data.type === 'subscribe') {
         // Handle subscription to channels (health, wallet, etc.)
-        ws.send(JSON.stringify({ 
-          type: 'subscribed', 
+        ws.send(JSON.stringify({
+          type: 'subscribed',
           channel: data.channel,
-          timestamp: Date.now() 
+          timestamp: Date.now()
         }));
       }
     } catch (error) {
       console.error('Invalid WebSocket message:', error);
-      ws.send(JSON.stringify({ 
-        type: 'error', 
-        message: 'Invalid message format' 
+      ws.send(JSON.stringify({
+        type: 'error',
+        message: 'Invalid message format'
       }));
     }
   });
@@ -447,7 +447,7 @@ async function startServer() {
       console.log(`📨 SSE endpoint on http://localhost:${PORT}/sse`);
       console.log(`💚 Health check: http://localhost:${PORT}/health`);
     });
-    
+
     // Test MongoDB connection in background (non-blocking)
     console.log('\n🔍 Testing MongoDB connection (non-blocking)...');
     testConnection()
