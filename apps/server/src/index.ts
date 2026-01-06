@@ -243,16 +243,16 @@ const httpServer = createServer(async (req, res) => {
     }
 
     // Create headers
-    let headers: Headers;
+    let headers: any;
     try {
       headers = new Headers();
       if (req.headers) {
         Object.entries(req.headers).forEach(([key, value]) => {
           if (value) {
             if (typeof value === 'string') {
-              headers.append(key, value);
+              (headers as any).append(key, value);
             } else if (Array.isArray(value)) {
-              headers.append(key, value.join(', '));
+              (headers as any).append(key, value.join(', '));
             }
           }
         });
@@ -310,7 +310,8 @@ const httpServer = createServer(async (req, res) => {
     // Write status and headers
     if (!res.headersSent) {
       res.statusCode = (response as any).status;
-      ((response as any).headers as Headers).forEach((value: string, key: string) => {
+      const responseHeaders = (response as any).headers;
+      responseHeaders.forEach((value: string, key: string) => {
         // Skip problematic headers that Node.js handles
         const lowerKey = key.toLowerCase();
         if (lowerKey !== 'content-encoding' &&
