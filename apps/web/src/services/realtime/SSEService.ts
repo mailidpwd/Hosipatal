@@ -13,17 +13,27 @@ export class SSEService {
   private status: SSEStatus = 'disconnected';
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 10;
+  private isProduction: boolean;
 
   constructor(url?: string) {
     const sseUrl = url || env.VITE_SSE_URL || 
       (env.VITE_SERVER_URL ? env.VITE_SERVER_URL + '/sse' : 'http://localhost:3000/sse');
     this.url = sseUrl;
+    
+    // Detect if we're in production (HTTPS) - SSE not supported on Vercel serverless
+    this.isProduction = sseUrl.startsWith('https://') || sseUrl.includes('vercel.app');
   }
 
   /**
    * Connect to SSE server
    */
   connect(): void {
+    // Skip SSE in production (Vercel serverless doesn't support it)
+    if (this.isProduction) {
+      this.setStatus('disconnected');
+      return;
+    }
+
     if (this.eventSource?.readyState === EventSource.OPEN) {
       return;
     }
@@ -39,7 +49,10 @@ export class SSEService {
       };
 
       this.eventSource.onerror = (error) => {
-        console.error('SSE error:', error);
+        // Only log errors in development
+        if (!this.isProduction) {
+          console.error('SSE error:', error);
+        }
         this.setStatus('error');
         
         // EventSource automatically reconnects, but we track attempts
@@ -70,7 +83,9 @@ export class SSEService {
         this.handleEvent('vitals', event);
       });
     } catch (error) {
-      console.error('Failed to create SSE connection:', error);
+      if (!this.isProduction) {
+        console.error('Failed to create SSE connection:', error);
+      }
       this.setStatus('error');
     }
   }

@@ -22,18 +22,28 @@ export class WebSocketService {
   private status: WebSocketStatus = 'disconnected';
   private reconnectTimer: NodeJS.Timeout | null = null;
   private heartbeatInterval: NodeJS.Timeout | null = null;
+  private isProduction: boolean;
 
   constructor(url?: string) {
     // Use environment variable or construct from server URL
     const wsUrl = url || env.VITE_WS_URL || 
       (env.VITE_SERVER_URL ? env.VITE_SERVER_URL.replace('http', 'ws') + '/ws' : 'ws://localhost:3000/ws');
     this.url = wsUrl;
+    
+    // Detect if we're in production (HTTPS/WSS) - WebSocket not supported on Vercel serverless
+    this.isProduction = wsUrl.startsWith('wss://') || wsUrl.includes('vercel.app');
   }
 
   /**
    * Connect to WebSocket server
    */
   connect(): void {
+    // Skip WebSocket in production (Vercel serverless doesn't support it)
+    if (this.isProduction) {
+      this.setStatus('disconnected');
+      return;
+    }
+
     if (this.ws?.readyState === WebSocket.OPEN) {
       return;
     }
@@ -59,19 +69,28 @@ export class WebSocketService {
       };
 
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        // Only log errors in development
+        if (!this.isProduction) {
+          console.error('WebSocket error:', error);
+        }
         this.setStatus('error');
       };
 
       this.ws.onclose = () => {
         this.setStatus('disconnected');
         this.stopHeartbeat();
-        this.scheduleReconnect();
+        if (!this.isProduction) {
+          this.scheduleReconnect();
+        }
       };
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
+      if (!this.isProduction) {
+        console.error('Failed to create WebSocket connection:', error);
+      }
       this.setStatus('error');
-      this.scheduleReconnect();
+      if (!this.isProduction) {
+        this.scheduleReconnect();
+      }
     }
   }
 
@@ -95,6 +114,10 @@ export class WebSocketService {
    * Send message through WebSocket
    */
   send(type: string, payload: any): void {
+    if (this.isProduction) {
+      return; // Silently skip in production
+    }
+    
     if (this.ws?.readyState === WebSocket.OPEN) {
       const message: WebSocketMessage = {
         type,
@@ -103,7 +126,9 @@ export class WebSocketService {
       };
       this.ws.send(JSON.stringify(message));
     } else {
-      console.warn('WebSocket is not connected. Message not sent:', type);
+      if (!this.isProduction) {
+        console.warn('WebSocket is not connected. Message not sent:', type);
+      }
     }
   }
 
@@ -159,8 +184,14 @@ export class WebSocketService {
   }
 
   private scheduleReconnect(): void {
+    if (this.isProduction) {
+      return; // Don't reconnect in production
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnection attempts reached');
+      if (!this.isProduction) {
+        console.error('Max reconnection attempts reached');
+      }
       return;
     }
 
