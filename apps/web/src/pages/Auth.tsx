@@ -365,7 +365,7 @@ export const AuthScreen: React.FC<AuthProps> = ({ onLogin }) => {
                   // Create demo user matching backend data
                   const demoUser = getDemoUser(selectedRole);
                   
-                  // Set user in AuthContext via queryClient
+                  // Set user in AuthContext via queryClient (this will stop loading state)
                   queryClient.setQueryData(['auth', 'me'], demoUser);
                   
                   // Store IDs in sessionStorage (matching what real login does)

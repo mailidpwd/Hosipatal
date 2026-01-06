@@ -31,6 +31,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { data: currentUser, isLoading } = useQuery({
     queryKey: ['auth', 'me'],
     queryFn: async () => {
+      // Check if data already exists in cache (for demo mode)
+      const cachedData = queryClient.getQueryData<AuthUser>(['auth', 'me']);
+      if (cachedData) {
+        console.log('[AuthContext] Using cached user data:', cachedData);
+        // Store providerId in sessionStorage if user is STAFF
+        if (cachedData?.role === 'STAFF' && cachedData?.id) {
+          try {
+            sessionStorage.setItem('providerId', cachedData.id);
+          } catch {
+            // Ignore storage errors
+          }
+        }
+        return cachedData;
+      }
+
       try {
         const userData = await authService.getCurrentUser();
         // Store providerId in sessionStorage if user is STAFF
@@ -43,7 +58,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         return userData;
       } catch (error) {
-        // Not authenticated
+        // Not authenticated - but also check cache as fallback
+        const cachedFallback = queryClient.getQueryData<AuthUser>(['auth', 'me']);
+        if (cachedFallback) {
+          console.log('[AuthContext] API failed, using cached data:', cachedFallback);
+          return cachedFallback;
+        }
         return null;
       }
     },
