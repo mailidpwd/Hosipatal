@@ -4,13 +4,49 @@ import { Icon, Button } from '@/components/UI';
 import { Input } from '@/components/ui/input';
 import { authService } from '@/services/api/authService';
 import { useAuth } from '@/context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AuthProps {
   onLogin: (role: UserRole, userData?: any) => void;
 }
 
+// Demo user data matching backend in-memory store
+const getDemoUser = (role: UserRole) => {
+  switch (role) {
+    case UserRole.STAFF:
+      return {
+        id: 'staff-1',
+        name: 'Dr. Sarah Smith',
+        email: 'doctor@rdmhealth.com',
+        role: UserRole.STAFF,
+      };
+    case UserRole.PATIENT:
+      return {
+        id: '83921',
+        name: 'Michael Chen',
+        email: 'michael.chen@rdmhealth.patient',
+        role: UserRole.PATIENT,
+      };
+    case UserRole.ADMIN:
+      return {
+        id: 'admin-1',
+        name: 'RDM Health Hospital Admin',
+        email: 'admin@rdmhealth.com',
+        role: UserRole.ADMIN,
+      };
+    default:
+      return {
+        id: '83921',
+        name: 'Michael Chen',
+        email: 'michael.chen@rdmhealth.patient',
+        role: UserRole.PATIENT,
+      };
+  }
+};
+
 export const AuthScreen: React.FC<AuthProps> = ({ onLogin }) => {
   const { login: authLogin } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -323,7 +359,32 @@ export const AuthScreen: React.FC<AuthProps> = ({ onLogin }) => {
             {/* Demo Mode (for development) */}
             <div className="mt-6 pt-6 border-t border-slate-200">
               <button
-                onClick={() => onLogin(selectedRole)}
+                onClick={() => {
+                  if (!selectedRole) return;
+                  
+                  // Create demo user matching backend data
+                  const demoUser = getDemoUser(selectedRole);
+                  
+                  // Set user in AuthContext via queryClient
+                  queryClient.setQueryData(['auth', 'me'], demoUser);
+                  
+                  // Store IDs in sessionStorage (matching what real login does)
+                  try {
+                    sessionStorage.setItem('userId', demoUser.id);
+                    if (demoUser.role === 'STAFF') {
+                      sessionStorage.setItem('providerId', demoUser.id);
+                    }
+                    if (demoUser.role === 'ADMIN') {
+                      sessionStorage.setItem('adminId', demoUser.id);
+                    }
+                    console.log('[Auth] ✅ Demo mode: Set user', demoUser);
+                  } catch (e) {
+                    console.warn('[Auth] Failed to store userId:', e);
+                  }
+                  
+                  // Call onLogin with user data
+                  onLogin(selectedRole, demoUser);
+                }}
                 className="w-full text-center text-sm text-slate-500 hover:text-slate-700 font-medium"
               >
                 Continue without authentication (Demo Mode)
