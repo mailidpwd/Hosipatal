@@ -474,9 +474,9 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
     queryFn: async () => {
       console.log('[ProviderPatients] Fetching patients with providerId:', stableProviderId);
       try {
-        // Short timeout (3 seconds) - if API doesn't respond quickly, use demo data
+        // Short timeout (1.5 seconds) - if API doesn't respond quickly, use demo data
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout')), 3000);
+          setTimeout(() => reject(new Error('Request timeout')), 1500);
         });
         
         const result = await Promise.race([
@@ -1871,8 +1871,8 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                       try {
                         const storedS = sessionStorage.getItem('demo_pledges');
                         const storedL = localStorage.getItem('demo_pledges');
-                        const sPledges = storedS ? JSON.parse(storedS) : [];
-                        const lPledges = storedL ? JSON.parse(storedL) : [];
+                        let sPledges: Pledge[] = storedS ? JSON.parse(storedS) : [];
+                        let lPledges: Pledge[] = storedL ? JSON.parse(storedL) : [];
                         
                         // Ensure patientId is set correctly (use '83921' for Michael Chen)
                         const normalizedPledge = {
@@ -1880,6 +1880,24 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                           patientId: '83921', // Always use '83921' for Michael Chen in demo mode
                         };
                         
+                        // NEW: Remove ALL previous pledges for this patient BEFORE adding new one
+                        // This ensures only the most recent pledge is shown
+                        const patientIdToMatch = normalizedPledge.patientId;
+                        const normalizeId = (id: string | undefined | null): string => {
+                          if (!id) return '';
+                          return String(id).replace('#', '').trim();
+                        };
+                        
+                        sPledges = sPledges.filter((p: Pledge) => {
+                          const pid = normalizeId(p.patientId);
+                          return pid !== patientIdToMatch;
+                        });
+                        lPledges = lPledges.filter((p: Pledge) => {
+                          const pid = normalizeId(p.patientId);
+                          return pid !== patientIdToMatch;
+                        });
+                        
+                        // Add the new (most recent) pledge
                         sPledges.push(normalizedPledge);
                         lPledges.push(normalizedPledge);
                         
@@ -1907,12 +1925,11 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                         //   console.warn('[ProviderPatients] Failed to write demo notification:', e);
                         // }
                         
-                        console.log('[ProviderPatients] ✅ Saved pledge to sessionStorage + localStorage:', {
+                        console.log('[ProviderPatients] ✅ Replaced old pledges, saved new pledge:', {
                           id: normalizedPledge.id,
                           patientId: normalizedPledge.patientId,
                           goal: normalizedPledge.goal,
-                          totalSession: sPledges.length,
-                          totalLocal: lPledges.length,
+                          totalPledgesForPatient: 1, // Should always be 1 now (only most recent)
                         });
                       } catch (e) {
                         console.warn('[ProviderPatients] Failed to store pledge:', e);

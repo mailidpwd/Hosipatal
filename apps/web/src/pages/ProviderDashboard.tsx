@@ -177,9 +177,9 @@ export const ProviderDashboard = () => {
     queryFn: async () => {
       console.log('[ProviderDashboard] Fetching dashboard with providerId:', stableProviderId);
       try {
-        // Short timeout (3 seconds) - if API doesn't respond quickly, use demo data
+        // Short timeout (1.5 seconds) - if API doesn't respond quickly, use demo data
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout')), 3000);
+          setTimeout(() => reject(new Error('Request timeout')), 1500);
         });
         
         const result = await Promise.race([

@@ -126,6 +126,67 @@ export class UserService extends BaseService {
               status: 'active',
             };
             pledges[index] = updated;
+            
+            // NEW: Convert accepted pledge to a goal and store it
+            try {
+              const goalsKey = 'demo_goals';
+              const existingGoals = (() => {
+                try {
+                  const stored = localStorage.getItem(goalsKey);
+                  return stored ? JSON.parse(stored) : [];
+                } catch { return []; }
+              })();
+              
+              // Determine category from metricType
+              const getCategory = (metricType?: string): 'weight' | 'activity' | 'hydration' | 'sleep' | 'bp' | 'other' => {
+                if (!metricType) return 'other';
+                const lower = metricType.toLowerCase();
+                if (lower.includes('blood') || lower.includes('bp')) return 'bp';
+                if (lower.includes('weight')) return 'weight';
+                if (lower.includes('activity') || lower.includes('step')) return 'activity';
+                if (lower.includes('water') || lower.includes('hydration')) return 'hydration';
+                if (lower.includes('sleep')) return 'sleep';
+                return 'other';
+              };
+              
+              // Create goal from pledge
+              const goalFromPledge = {
+                id: `goal-${pledge.id}`,
+                title: pledge.goal || `${pledge.metricType || 'Health'} Challenge`,
+                description: pledge.message || `Reach ${pledge.target || 'target'} for ${pledge.totalDays || 7} days`,
+                category: getCategory(pledge.metricType),
+                target: pledge.target || '',
+                current: '', // Will be updated as patient logs progress
+                reward: pledge.amount || 0,
+                status: 'active' as const,
+                assignedBy: pledge.providerName || 'Doctor',
+                assignedByRole: 'doctor' as const,
+                startDate: now.toISOString(),
+                endDate: endDate.toISOString(),
+                progress: 0,
+                createdAt: now,
+              };
+              
+              // Remove any existing goal from the same pledge (if re-accepting)
+              const filteredGoals = existingGoals.filter((g: any) => g.id !== goalFromPledge.id);
+              
+              // Add the new goal
+              filteredGoals.push(goalFromPledge);
+              localStorage.setItem(goalsKey, JSON.stringify(filteredGoals));
+              
+              // Dispatch event to update goals page
+              window.dispatchEvent(new Event('demo_goals_updated'));
+              
+              console.log('[UserService] ✅ Created goal from accepted pledge:', {
+                goalId: goalFromPledge.id,
+                title: goalFromPledge.title,
+                category: goalFromPledge.category,
+                reward: goalFromPledge.reward,
+              });
+            } catch (goalError) {
+              console.warn('[UserService] Failed to create goal from pledge:', goalError);
+            }
+            
             // Write back to both storages
             try { sessionStorage.setItem('demo_pledges', JSON.stringify(pledges)); } catch {}
             try { localStorage.setItem('demo_pledges', JSON.stringify(pledges)); } catch {}

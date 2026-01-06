@@ -181,19 +181,28 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
         console.log('[PatientDashboard] 📦 Pledges array check:', Array.isArray(pledges), pledges?.length);
         
         const result = Array.isArray(pledges) ? pledges : (pledges ? [pledges] : []);
-        console.log('[PatientDashboard] ✅ Returning', result.length, 'pledge(s)');
-        if (result.length > 0) {
-          console.log('[PatientDashboard] Pledge details:', result.map(p => ({
-            id: p.id,
-            patientId: p.patientId,
-            status: p.status,
-            accepted: p.accepted,
-            goal: p.goal
-          })));
+        
+        // NEW: Sort by timestamp (newest first) and return only the most recent one
+        const sorted = result.sort((a, b) => {
+          const timeA = new Date(a.timestamp || 0).getTime();
+          const timeB = new Date(b.timestamp || 0).getTime();
+          return timeB - timeA; // Newest first
+        });
+        
+        // Return only the most recent pledge
+        const mostRecent = sorted.length > 0 ? [sorted[0]] : [];
+        
+        console.log('[PatientDashboard] ✅ Returning most recent pledge:', mostRecent.length);
+        if (mostRecent.length > 0) {
+          console.log('[PatientDashboard] Most recent pledge:', {
+            id: mostRecent[0].id,
+            goal: mostRecent[0].goal,
+            timestamp: mostRecent[0].timestamp,
+          });
         } else {
           console.log('[PatientDashboard] ⚠️ No pledges returned - checking sessionStorage');
         }
-        return result;
+        return mostRecent;
       } catch (error: any) {
         console.warn('[PatientDashboard] API call failed, checking storage:', error?.message);
         // Demo mode fallback - check both sessionStorage and localStorage
@@ -235,8 +244,24 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
             });
             
             if (userPledges.length > 0) {
-              console.log('[PatientDashboard] ✅ Found', userPledges.length, 'pledge(s) in storage');
-              return userPledges;
+              // NEW: Sort by timestamp (newest first) and return only the most recent one
+              const sorted = userPledges.sort((a, b) => {
+                const timeA = new Date(a.timestamp || 0).getTime();
+                const timeB = new Date(b.timestamp || 0).getTime();
+                return timeB - timeA; // Newest first
+              });
+              
+              // Return only the most recent pledge
+              const mostRecent = sorted.length > 0 ? [sorted[0]] : [];
+              console.log('[PatientDashboard] ✅ Found', userPledges.length, 'pledge(s) in storage, returning most recent:', mostRecent.length);
+              if (mostRecent.length > 0) {
+                console.log('[PatientDashboard] Most recent pledge:', {
+                  id: mostRecent[0].id,
+                  goal: mostRecent[0].goal,
+                  timestamp: mostRecent[0].timestamp,
+                });
+              }
+              return mostRecent;
             } else {
               console.log('[PatientDashboard] ⚠️ No matching pledges found. Stored pledges:', pledges.map((p: Pledge) => ({
                 id: p.id,
