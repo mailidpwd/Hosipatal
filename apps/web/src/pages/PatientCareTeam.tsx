@@ -4,7 +4,16 @@ import { Icon } from '@/components/UI';
 import { userService } from '@/services/api/userService';
 import { useAuth } from '@/context/AuthContext';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
+// import { toast } from 'sonner';
+// Notifications disabled - create a no-op toast function
+const toast = {
+  success: () => {},
+  error: () => {},
+  info: () => {},
+  warning: () => {},
+  loading: () => ({ dismiss: () => {} }),
+  dismiss: () => {},
+} as any;
 
 const StarRating = ({ value, onChange, size = "text-lg", readonly = false }: { value: number, onChange?: (v: number) => void, size?: string, readonly?: boolean }) => {
     return (

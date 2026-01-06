@@ -10,7 +10,16 @@ import { useStaffRealTime } from '@/hooks/useStaffRealTime';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useNavigation } from '@/context/NavigationContext';
 import { useAuth } from '@/context/AuthContext';
-import { toast } from 'sonner';
+// import { toast } from 'sonner';
+// Notifications disabled - create a no-op toast function
+const toast = {
+  success: () => {},
+  error: () => {},
+  info: () => {},
+  warning: () => {},
+  loading: () => ({ dismiss: () => {} }),
+  dismiss: () => {},
+} as any;
 
 interface ProviderPatientsProps {
   onNavigate: (page: Page) => void;

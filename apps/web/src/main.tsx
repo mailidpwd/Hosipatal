@@ -19,6 +19,17 @@ try {
     console.warn('[main.tsx] Failed to clear notification storage:', e);
   }
   
+  // NUCLEAR OPTION: Disable sonner toast auto-injection
+  // Override window.toast if sonner tries to create it
+  if (typeof window !== 'undefined') {
+    (window as any).__SONNER_DISABLED__ = true;
+    // Prevent sonner from auto-creating toasts
+    const originalToast = (window as any).toast;
+    if (originalToast) {
+      (window as any).toast = () => {}; // Do nothing
+    }
+  }
+  
   // Register service worker with safety: if it fails (often due to cached workbox chunk),
   // automatically unregister old SWs + clear caches so the app recovers without manual user steps.
   if ('serviceWorker' in navigator) {

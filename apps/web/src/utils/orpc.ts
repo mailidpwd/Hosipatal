@@ -5,7 +5,16 @@ import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+// import { toast } from "sonner";
+// Notifications disabled - create a no-op toast function
+const toast = {
+  success: () => {},
+  error: () => {},
+  info: () => {},
+  warning: () => {},
+  loading: () => ({ dismiss: () => {} }),
+  dismiss: () => {},
+} as any;
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
