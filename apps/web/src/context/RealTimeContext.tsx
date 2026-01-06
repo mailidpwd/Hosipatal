@@ -166,20 +166,15 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
     refetchInterval: 300000, // Refetch every 5 minutes
   });
 
-  // Fetch notifications
+  // Fetch notifications - DISABLED (notifications completely removed)
   const { data: serverNotifications, refetch: refetchNotifications } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      try {
-        const data = await notificationService.getNotifications({ limit: 10 });
-        // Ensure we always return an array, never undefined
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Failed to fetch notifications:', error);
-        return [];
-      }
+      // Always return empty array - notifications disabled
+      return [];
     },
-    refetchInterval: 60000, // Refetch every 60 seconds (avoid demo spam)
+    enabled: false, // Completely disable this query
+    refetchInterval: false, // No refetching
   });
 
   // Update local state from API responses (only if data exists)
@@ -230,26 +225,18 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
   }, [appointments]);
 
   useEffect(() => {
-    if (serverNotifications && Array.isArray(serverNotifications)) {
-      // Only update if IDs changed to avoid re-showing the same toast UI repeatedly
-      setNotifications((prev) => {
-        const prevIds = prev.map((n) => n.id).join('|');
-        const nextIds = serverNotifications.map((n) => n.id).join('|');
-        return prevIds === nextIds ? prev : serverNotifications;
-      });
-    } else {
-      setNotifications([]);
-    }
+    // Notifications completely disabled - always set to empty array
+    setNotifications([]);
   }, [serverNotifications]);
 
-  // Listen for demo notifications updates (same tab)
-  useEffect(() => {
-    const handler = () => {
-      refetchNotifications();
-    };
-    window.addEventListener('demo_notifications_updated', handler as any);
-    return () => window.removeEventListener('demo_notifications_updated', handler as any);
-  }, [refetchNotifications]);
+  // Listen for demo notifications updates (same tab) - DISABLED
+  // useEffect(() => {
+  //   const handler = () => {
+  //     refetchNotifications();
+  //   };
+  //   window.addEventListener('demo_notifications_updated', handler as any);
+  //   return () => window.removeEventListener('demo_notifications_updated', handler as any);
+  // }, [refetchNotifications]);
 
   // Set up real-time updates for health data
   const realtimeHealth = useRealtime(
@@ -287,10 +274,12 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
   }, [ws.isConnected, ws, refetchNotifications, refetchVitals, refetchMetrics, refetchWallet]);
 
   const dismissNotification = async (id: string) => {
+    // Notifications disabled - do nothing
+    setNotifications([]);
     try {
-      await notificationService.markRead(id);
-      setNotifications(prev => prev.filter(n => n.id !== id));
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      // await notificationService.markRead(id);
+      // setNotifications(prev => prev.filter(n => n.id !== id));
+      // queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch (error) {
       // If API call fails, just remove from local state
       setNotifications(prev => prev.filter(n => n.id !== id));

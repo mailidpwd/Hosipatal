@@ -170,15 +170,17 @@ export const Toast = ({
 };
 
 export const ToastContainer = ({ notifications, onDismiss }: { notifications: any[], onDismiss: (id: string) => void }) => {
-    if (notifications.length === 0) return null;
-    return (
-        <div className="fixed top-24 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
-            {notifications.map((n) => (
-                <div key={n.id} className="pointer-events-auto">
-                    <Toast message={n.message} type={n.type} onClose={() => onDismiss(n.id)} />
-                </div>
-            ))}
-        </div>
-    );
+    // Notifications completely disabled - never render anything
+    return null;
+    // if (notifications.length === 0) return null;
+    // return (
+    //     <div className="fixed top-24 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
+    //         {notifications.map((n) => (
+    //             <div key={n.id} className="pointer-events-auto">
+    //                 <Toast message={n.message} type={n.type} onClose={() => onDismiss(n.id)} />
+    //             </div>
+    //         ))}
+    //     </div>
+    // );
 };
 
