@@ -10,6 +10,7 @@ import { useStaffRealTime } from '@/hooks/useStaffRealTime';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useNavigation } from '@/context/NavigationContext';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 interface ProviderPatientsProps {
   onNavigate: (page: Page) => void;
@@ -134,6 +135,7 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
   const [currentStep, setCurrentStep] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'critical' | 'stable' | 'at-risk' | 'moderate' | undefined>(undefined);
+  const [isCreatingPledge, setIsCreatingPledge] = useState(false);
 
   // Pledge form state
   const [pledgeData, setPledgeData] = useState({
@@ -1825,12 +1827,19 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
               </button>
               <button
                 onClick={async () => {
+                  if (isCreatingPledge) return; // Prevent double clicks
+                  
+                  setIsCreatingPledge(true);
+                  const loadingToast = toast.loading('Creating pledge...', {
+                    description: 'Please wait while we set up the challenge',
+                  });
+
                   try {
                     // Get provider info for email
                     const providerInfo = {
-                      providerId: providerId || user?.id || '1',
-                      providerName: user?.name || 'Healthcare Provider',
-                      providerEmail: user?.email || 'provider@rdmhealth.com',
+                      providerId: providerId || user?.id || 'staff-1',
+                      providerName: user?.name || 'Dr. Sarah Smith',
+                      providerEmail: user?.email || 'doctor@rdmhealth.com',
                     };
 
                     // Create pledge with full details including email info
@@ -1874,30 +1883,49 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                       const patient = patients.find(p => p.id === selectedPatientForPledge.id || p.patientId === selectedPatientForPledge.id);
                       const patientEmail = patientProfile?.email || (patient as any)?.email || 'michael.chen@rdmhealth.patient';
 
-                      alert(`✅ Pledge activated successfully!\n\n${pledgeData.rdmAmount} RDM has been allocated for ${selectedPatientForPledge.name}.\n\n📧 Emails have been sent to:\n- Patient: ${patientEmail}\n- Provider: ${providerInfo.providerEmail}\n\nThe patient has been notified and can now track their progress in real-time.`);
-
-                      setShowPledgeModal(false);
-                      setSelectedPatientForPledge(null);
-                      setPledgeData({
-                        metricType: 'Blood Pressure',
-                        target: '< 130/85',
-                        duration: '7',
-                        verificationMethod: 'Device Verified Only',
-                        rdmAmount: 500,
-                        message: '',
+                      // Dismiss loading toast and show success
+                      toast.dismiss(loadingToast);
+                      toast.success('Pledge Activated Successfully!', {
+                        description: `${pledgeData.rdmAmount} RDM allocated for ${selectedPatientForPledge.name}. The patient has been notified and can track progress in real-time.`,
+                        duration: 5000,
                       });
+
+                      // Close modal after a short delay
+                      setTimeout(() => {
+                        setShowPledgeModal(false);
+                        setSelectedPatientForPledge(null);
+                        setPledgeData({
+                          metricType: 'Blood Pressure',
+                          target: '< 130/85',
+                          duration: '7',
+                          verificationMethod: 'Device Verified Only',
+                          rdmAmount: 500,
+                          message: '',
+                        });
+                        setIsCreatingPledge(false);
+                      }, 1000);
                     } else {
                       throw new Error('Failed to create pledge');
                     }
                   } catch (error: any) {
                     console.error('Error creating pledge:', error);
-                    alert(`Failed to create pledge: ${error?.message || 'Please try again.'}`);
+                    toast.dismiss(loadingToast);
+                    toast.error('Failed to Create Pledge', {
+                      description: error?.message || 'Please try again.',
+                      duration: 4000,
+                    });
+                    setIsCreatingPledge(false);
                   }
                 }}
-                disabled={profileLoading && !patientProfile && !patientVitals}
+                disabled={(profileLoading && !patientProfile && !patientVitals) || isCreatingPledge}
                 className="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary-dark dark:hover:bg-primary/90 text-slate-900 font-bold text-sm shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {profileLoading && !patientProfile && !patientVitals ? (
+                {isCreatingPledge ? (
+                  <>
+                    <LoadingSpinner />
+                    <span>Activating Challenge...</span>
+                  </>
+                ) : profileLoading && !patientProfile && !patientVitals ? (
                   <>
                     <LoadingSpinner />
                     <span>Loading patient data...</span>
