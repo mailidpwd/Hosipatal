@@ -172,14 +172,52 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
           const storedPledges = sessionStorage.getItem('demo_pledges');
           if (storedPledges) {
             const pledges = JSON.parse(storedPledges);
-            // Filter pledges for this user
-            const userPledges = pledges.filter((p: Pledge) => 
-              p.patientId === patientId || p.patientId === '83921' || p.patientId?.includes('83921')
-            );
+            console.log('[PatientDashboard] 📦 All stored pledges:', pledges);
+            console.log('[PatientDashboard] 🔍 Looking for patientId:', patientId);
+            
+            // Normalize patient IDs for comparison (remove #, handle different formats)
+            const normalizeId = (id: string | undefined | null): string => {
+              if (!id) return '';
+              return String(id).replace('#', '').trim();
+            };
+            
+            const normalizedPatientId = normalizeId(patientId);
+            
+            // Filter pledges for this user - check multiple ID formats
+            const userPledges = pledges.filter((p: Pledge) => {
+              const pledgePatientId = normalizeId(p.patientId);
+              const matches = 
+                pledgePatientId === normalizedPatientId ||
+                pledgePatientId === '83921' ||
+                normalizedPatientId === '83921' ||
+                pledgePatientId.includes('83921') ||
+                normalizedPatientId.includes(pledgePatientId) ||
+                pledgePatientId.includes(normalizedPatientId);
+              
+              if (matches) {
+                console.log('[PatientDashboard] ✅ Matched pledge:', {
+                  pledgeId: p.id,
+                  pledgePatientId: p.patientId,
+                  normalizedPledgeId: pledgePatientId,
+                  queryPatientId: patientId,
+                  normalizedQueryId: normalizedPatientId,
+                });
+              }
+              return matches;
+            });
+            
             if (userPledges.length > 0) {
               console.log('[PatientDashboard] ✅ Found', userPledges.length, 'pledge(s) in sessionStorage');
               return userPledges;
+            } else {
+              console.log('[PatientDashboard] ⚠️ No matching pledges found. Stored pledges:', pledges.map((p: Pledge) => ({
+                id: p.id,
+                patientId: p.patientId,
+                goal: p.goal,
+              })));
             }
+          } else {
+            console.log('[PatientDashboard] ⚠️ No stored pledges in sessionStorage');
           }
         } catch (e) {
           console.warn('[PatientDashboard] Failed to parse stored pledges:', e);
@@ -189,7 +227,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
       }
     },
     enabled: isQueryEnabled,
-    refetchInterval: 30000,
+    refetchInterval: 5000, // Refetch every 5 seconds to catch new pledges quickly
     staleTime: 0,
     gcTime: 5 * 60 * 1000,
     retry: false, // Don't retry - use demo data immediately

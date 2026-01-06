@@ -1861,9 +1861,21 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                       try {
                         const storedPledges = sessionStorage.getItem('demo_pledges');
                         const pledges = storedPledges ? JSON.parse(storedPledges) : [];
-                        pledges.push(pledge);
+                        
+                        // Ensure patientId is set correctly (use '83921' for Michael Chen)
+                        const normalizedPledge = {
+                          ...pledge,
+                          patientId: '83921', // Always use '83921' for Michael Chen in demo mode
+                        };
+                        
+                        pledges.push(normalizedPledge);
                         sessionStorage.setItem('demo_pledges', JSON.stringify(pledges));
-                        console.log('[ProviderPatients] ✅ Stored pledge in sessionStorage:', pledge.id);
+                        console.log('[ProviderPatients] ✅ Stored pledge in sessionStorage:', {
+                          pledgeId: normalizedPledge.id,
+                          patientId: normalizedPledge.patientId,
+                          goal: normalizedPledge.goal,
+                          allPledges: pledges.length,
+                        });
                       } catch (e) {
                         console.warn('[ProviderPatients] Failed to store pledge:', e);
                       }

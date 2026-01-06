@@ -244,7 +244,7 @@ export class ProviderService extends BaseService {
       
       return {
         id: `pledge-${Date.now()}`,
-        patientId: patientId,
+        patientId: '83921', // Always use '83921' for Michael Chen in demo mode
         patientName: 'Michael Chen',
         goal: goal,
         amount: amount,
