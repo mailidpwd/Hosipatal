@@ -10,6 +10,9 @@ export const env = createEnv({
     WS_PORT: z.coerce.number().default(3001).optional(),
     DATABASE_URL: z.string().url().optional(),
   },
+  clientPrefix: "PUBLIC_",
+  client: {},
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });

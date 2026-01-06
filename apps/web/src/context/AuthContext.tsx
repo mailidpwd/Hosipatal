@@ -153,9 +153,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const login = async (email: string, password: string) => {
-    const response = await loginMutation.mutateAsync({ email, password });
-    return response; // Return response for AuthScreen to verify role
+  const login = async (email: string, password: string): Promise<void> => {
+    await loginMutation.mutateAsync({ email, password });
   };
 
   const register = async (data: { email: string; password: string; name: string; role: UserRole }) => {

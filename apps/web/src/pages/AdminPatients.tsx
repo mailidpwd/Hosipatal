@@ -7,7 +7,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useNavigation } from '@/context/NavigationContext';
 import { Page } from '@/types';
 
-export const AdminPatients = () => {
+interface AdminPatientsProps {
+  onNavigate?: (page: Page) => void;
+}
+
+export const AdminPatients = ({ onNavigate }: AdminPatientsProps) => {
   const { user } = useAuth();
   const adminId = user?.role === 'ADMIN' ? user.id : undefined;
   const { setCurrentPage, setNavigationState } = useNavigation();
