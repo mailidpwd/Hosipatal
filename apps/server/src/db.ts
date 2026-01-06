@@ -19,10 +19,10 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
   try {
     console.log('🔄 Connecting to MongoDB...');
     client = new MongoClient(env.DATABASE_URL);
-    
+
     await client.connect();
     console.log('✅ Successfully connected to MongoDB');
-    
+
     // Extract database name from connection string or use default
     // MongoDB connection string format: mongodb+srv://user:pass@host/dbname?options
     let dbName = 'rdm-health'; // default
@@ -37,11 +37,11 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
       }
     }
     db = client.db(dbName);
-    
+
     // Test the connection
     await db.admin().ping();
     console.log(`✅ Database "${dbName}" is accessible`);
-    
+
     return { client, db };
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
@@ -89,13 +89,13 @@ export async function testConnection(): Promise<{ success: boolean; message: str
       setTimeout(() => reject(new Error('MongoDB connection timeout (5s)')), 5000);
     });
 
-    const { client, db } = await Promise.race([connectionPromise, timeoutPromise]) as { client: MongoClient; db: Db };
-    
+    const { client: _client, db } = await Promise.race([connectionPromise, timeoutPromise]) as { client: MongoClient; db: Db };
+
     // Get server info
     const adminDb = db.admin();
     const serverStatus = await adminDb.serverStatus();
     const dbStats = await db.stats();
-    
+
     return {
       success: true,
       message: 'MongoDB connection successful',
@@ -110,7 +110,7 @@ export async function testConnection(): Promise<{ success: boolean; message: str
   } catch (error: any) {
     const errorMessage = error?.message || String(error) || 'Failed to connect to MongoDB';
     const errorDetails = error?.code ? { code: error.code, name: error.name } : undefined;
-    
+
     return {
       success: false,
       message: errorMessage + '. Using in-memory stores.',
