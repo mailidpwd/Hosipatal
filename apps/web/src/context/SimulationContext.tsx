@@ -26,7 +26,13 @@ export const SimulationProvider = ({ children }: { children?: ReactNode }) => {
   const [heartRate, setHeartRate] = useState(72);
   const [steps, setSteps] = useState(8432);
   const [walletBalance, setWalletBalance] = useState(1250.00);
+  // Notifications always empty - completely disabled
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  // Ensure notifications stay empty
+  useEffect(() => {
+    setNotifications([]);
+  }, []);
   
   // Set appointment to tomorrow at 10 AM relative to load time
   const [nextAppointment] = useState(() => {
@@ -37,13 +43,15 @@ export const SimulationProvider = ({ children }: { children?: ReactNode }) => {
   });
 
   const addNotification = (message: string, type: 'success' | 'info' | 'warning' = 'info') => {
-      const newNotif = { id: Date.now().toString(), message, type, timestamp: new Date() };
-      setNotifications(prev => [newNotif, ...prev].slice(0, 3)); // Keep max 3
+      // Notifications completely disabled - do nothing
+      setNotifications([]);
+      // const newNotif = { id: Date.now().toString(), message, type, timestamp: new Date() };
+      // setNotifications(prev => [newNotif, ...prev].slice(0, 3)); // Keep max 3
       
       // Auto dismiss after 5 seconds
-      setTimeout(() => {
-          dismissNotification(newNotif.id);
-      }, 5000);
+      // setTimeout(() => {
+      //     dismissNotification(newNotif.id);
+      // }, 5000);
   };
 
   const dismissNotification = (id: string) => {
@@ -89,29 +97,32 @@ export const SimulationProvider = ({ children }: { children?: ReactNode }) => {
     return () => clearInterval(interval);
   }, [isSimulationActive]);
 
-  // Random System Notifications (Every 30-60s)
+  // Random System Notifications (Every 30-60s) - COMPLETELY DISABLED
   useEffect(() => {
-    if (!isSimulationActive) return;
-    const messages = [
-        { msg: "Dr. Smith verified your vitals log", type: 'success' },
-        { msg: "Goal Achieved: Morning Hydration", type: 'success' },
-        { msg: "New reward unlocked in Marketplace", type: 'info' },
-        { msg: "Market Trend: RDM value up 2%", type: 'info' },
-        { msg: "Reminder: Take Vitamin D", type: 'warning' }
-    ];
+    // Notifications disabled - do nothing
+    setNotifications([]);
+    return;
+    // if (!isSimulationActive) return;
+    // const messages = [
+    //     { msg: "Dr. Smith verified your vitals log", type: 'success' },
+    //     { msg: "Goal Achieved: Morning Hydration", type: 'success' },
+    //     { msg: "New reward unlocked in Marketplace", type: 'info' },
+    //     { msg: "Market Trend: RDM value up 2%", type: 'info' },
+    //     { msg: "Reminder: Take Vitamin D", type: 'warning' }
+    // ];
     
-    const triggerRandom = () => {
-        const item = messages[Math.floor(Math.random() * messages.length)];
-        addNotification(item.msg, item.type as any);
+    // const triggerRandom = () => {
+    //     const item = messages[Math.floor(Math.random() * messages.length)];
+    //     addNotification(item.msg, item.type as any);
         
-        // Schedule next
-        const nextDelay = Math.random() * 30000 + 30000; 
-        timeoutId = setTimeout(triggerRandom, nextDelay);
-    };
+    //     // Schedule next
+    //     const nextDelay = Math.random() * 30000 + 30000; 
+    //     timeoutId = setTimeout(triggerRandom, nextDelay);
+    // };
 
-    let timeoutId = setTimeout(triggerRandom, 10000); // First one after 10s
+    // let timeoutId = setTimeout(triggerRandom, 10000); // First one after 10s
 
-    return () => clearTimeout(timeoutId);
+    // return () => clearTimeout(timeoutId);
   }, [isSimulationActive]);
 
   const toggleSimulation = () => setIsSimulationActive(!isSimulationActive);
