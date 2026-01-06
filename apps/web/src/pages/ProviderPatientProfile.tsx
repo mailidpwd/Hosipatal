@@ -8,6 +8,47 @@ import { useRealTime } from '@/context/RealTimeContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useAuth } from '@/context/AuthContext';
 
+// Demo patient profile data
+const getDemoPatientProfile = (patientId: string) => {
+  // Demo data for Michael Chen (83921)
+  if (patientId === '83921' || patientId === '#83921' || patientId.includes('83921')) {
+    return {
+      id: '83921',
+      name: 'Michael Chen',
+      age: 45,
+      gender: 'Male',
+      patientId: '#83921',
+      diagnosis: 'Hypertension',
+      adherenceScore: 75,
+      rdmEarnings: 1250,
+      status: 'critical',
+      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
+      contactNumber: '+1-555-0123',
+      email: 'michael.chen@rdmhealth.patient',
+      address: '123 Health St, Medical City, MC 12345',
+      emergencyContact: {
+        name: 'Jane Chen',
+        relationship: 'Spouse',
+        phone: '+1-555-0124',
+      },
+      medications: [
+        { name: 'Lisinopril', dosage: '10mg', frequency: 'Once daily' },
+        { name: 'Metformin', dosage: '500mg', frequency: 'Twice daily' },
+      ],
+      vitals: {
+        bloodPressure: '150/95',
+        heartRate: 78,
+        weight: 185,
+        height: 175,
+      },
+    };
+  }
+  
+  // Add other patients' demo data as needed
+  // For now, return null for others to trigger error handling
+  return null;
+};
+
 export const ProviderPatientProfile = ({ onNavigate }: { onNavigate: (page: Page) => void }) => {
   const { navigationState } = useNavigation();
   const { heartRate } = useRealTime();
@@ -43,9 +84,36 @@ export const ProviderPatientProfile = ({ onNavigate }: { onNavigate: (page: Page
   // Fetch patient profile - filtered by providerId
   const { data: patientProfile, isLoading, error } = useQuery({
     queryKey: ['provider', 'patientProfile', patientId, stableProviderId],
-    queryFn: () => providerService.getPatientProfile(patientId, stableProviderId),
+    queryFn: async () => {
+      console.log('[ProviderPatientProfile] Fetching profile for patientId:', patientId);
+      try {
+        // Short timeout (1 second) - if API doesn't respond quickly, use demo data
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 1000);
+        });
+        
+        const result = await Promise.race([
+          providerService.getPatientProfile(patientId, stableProviderId),
+          timeoutPromise,
+        ]);
+        
+        console.log('[ProviderPatientProfile] Profile result:', result);
+        return result;
+      } catch (error: any) {
+        console.warn('[ProviderPatientProfile] API call failed, using demo data:', error?.message);
+        // Return demo data immediately if API fails (for demo mode or network issues)
+        const demoData = getDemoPatientProfile(patientId);
+        if (demoData) {
+          console.log('[ProviderPatientProfile] Using demo data:', demoData);
+          return demoData;
+        }
+        throw error; // Re-throw if no demo data available
+      }
+    },
     refetchInterval: 30000, // Refetch every 30 seconds
     enabled: !!stableProviderId && !authLoading, // Only fetch if providerId is available
+    retry: false, // Don't retry - use demo data immediately on failure
+    staleTime: 0, // Always consider data fresh for demo mode
   });
 
   if (authLoading || isLoading) {

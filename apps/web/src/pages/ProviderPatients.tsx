@@ -84,6 +84,30 @@ const getDemoPatientsData = (providerId: string) => {
   };
 };
 
+// Demo patient profile data for pledge modal
+const getDemoPatientProfile = (patientId: string) => {
+  if (patientId === '83921' || patientId === '#83921' || patientId?.includes('83921')) {
+    return {
+      id: '83921',
+      name: 'Michael Chen',
+      age: 45,
+      gender: 'Male',
+      patientId: '#83921',
+      diagnosis: 'Hypertension',
+      adherenceScore: 75,
+      rdmEarnings: 1250,
+      status: 'critical',
+      avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
+      vitals: {
+        bloodPressure: '150/95',
+        heartRate: 78,
+        weight: 185,
+      },
+    };
+  }
+  return null;
+};
+
 export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }) => {
   const [showPledgeModal, setShowPledgeModal] = useState(false);
   const [selectedPatientForPledge, setSelectedPatientForPledge] = useState<any>(null);
@@ -111,15 +135,67 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
   // Fetch patient profile and health data when opening pledge modal
   const { data: patientProfile, isLoading: profileLoading } = useQuery({
     queryKey: ['provider', 'patientProfile', selectedPatientForPledge?.id],
-    queryFn: () => providerService.getPatientProfile(selectedPatientForPledge!.id, providerId),
+    queryFn: async () => {
+      console.log('[ProviderPatients] Fetching profile for pledge, patientId:', selectedPatientForPledge?.id);
+      try {
+        // Short timeout (1 second) - if API doesn't respond quickly, use demo data
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 1000);
+        });
+        
+        const result = await Promise.race([
+          providerService.getPatientProfile(selectedPatientForPledge!.id, providerId),
+          timeoutPromise,
+        ]);
+        
+        console.log('[ProviderPatients] Profile result:', result);
+        return result;
+      } catch (error: any) {
+        console.warn('[ProviderPatients] API call failed, using demo data:', error?.message);
+        // Return demo data immediately if API fails (for demo mode or network issues)
+        const demoData = getDemoPatientProfile(selectedPatientForPledge!.id);
+        if (demoData) {
+          console.log('[ProviderPatients] Using demo data for pledge:', demoData);
+          return demoData;
+        }
+        throw error; // Re-throw if no demo data available
+      }
+    },
     enabled: !!selectedPatientForPledge && showPledgeModal,
+    retry: false,
+    staleTime: 0,
   });
 
   // Fetch patient vitals for real-time data
   const { data: patientVitals } = useQuery({
     queryKey: ['health', 'vitals', selectedPatientForPledge?.id],
-    queryFn: () => healthService.getVitals(selectedPatientForPledge!.id),
+    queryFn: async () => {
+      try {
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 1000);
+        });
+        
+        const result = await Promise.race([
+          healthService.getVitals(selectedPatientForPledge!.id),
+          timeoutPromise,
+        ]);
+        return result;
+      } catch (error: any) {
+        // Return demo vitals for Michael Chen
+        if (selectedPatientForPledge?.id === '83921' || selectedPatientForPledge?.id?.includes('83921')) {
+          return {
+            bloodPressure: '150/95',
+            heartRate: 78,
+            weight: 185,
+            timestamp: new Date().toISOString(),
+          };
+        }
+        throw error;
+      }
+    },
     enabled: !!selectedPatientForPledge && showPledgeModal,
+    retry: false,
+    staleTime: 0,
   });
 
   // Initialize pledge data with patient's actual health metrics - intelligently adapts to condition
@@ -408,10 +484,30 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
   const { criticalAlerts } = useStaffRealTime(stableProviderId);
 
   const patients = patientsData?.patients || [];
-  const criticalPatients = criticalAlerts.slice(0, 2).map(alert => {
-    const patient = patients.find(p => p.id === alert.patientId || p.patientId === alert.patientId);
-    return { ...alert, ...patient };
-  });
+  
+  // Use demo data for critical alerts if available (from patients data)
+  // First, try to get critical patients from patients data (those with status 'critical')
+  const criticalPatientsFromData = patients.filter(p => p.status === 'critical');
+  
+  // If we have critical patients from demo data, use them for critical alerts
+  // Otherwise, use realtime alerts
+  const criticalPatients = criticalPatientsFromData.length > 0 
+    ? criticalPatientsFromData.map(patient => ({
+        id: `alert-${patient.id}`,
+        patientId: patient.id,
+        patientName: patient.name,
+        type: patient.diagnosis === 'Hypertension' ? 'bp_spike' : 'missed_meds',
+        severity: 'high' as const,
+        message: patient.diagnosis === 'Hypertension' ? 'BP Spike (150/95)' : 'Missed Meds (3 Days)',
+        details: 'Recorded 2h ago',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        lastVisit: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        ...patient,
+      }))
+    : criticalAlerts.slice(0, 2).map(alert => {
+        const patient = patients.find(p => p.id === alert.patientId || p.patientId === alert.patientId);
+        return { ...alert, ...patient };
+      });
 
   return (
     <div className="w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 space-y-6 pb-24 md:pb-12 animate-[fadeIn_0.5s_ease-out]">
@@ -504,6 +600,12 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                             </h4>
                             <button
                               onClick={() => {
+                                // Only allow pledge for Michael Chen (id: '83921')
+                                if (alert.patientId !== '83921' && alert.patientId !== '#83921' && !alert.patientId?.includes('83921')) {
+                                  alert('Pledge feature is currently only available for Michael Chen (#83921) in demo mode.');
+                                  return;
+                                }
+
                                 // Find the actual patient to get the correct ID format
                                 const actualPatient = patients.find(p =>
                                   p.id === alert.patientId ||
