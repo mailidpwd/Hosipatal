@@ -179,7 +179,7 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
         return [];
       }
     },
-    refetchInterval: 10000, // Refetch every 10 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds (avoid demo spam)
   });
 
   // Update local state from API responses (only if data exists)
@@ -231,11 +231,25 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
 
   useEffect(() => {
     if (serverNotifications && Array.isArray(serverNotifications)) {
-      setNotifications(serverNotifications);
+      // Only update if IDs changed to avoid re-showing the same toast UI repeatedly
+      setNotifications((prev) => {
+        const prevIds = prev.map((n) => n.id).join('|');
+        const nextIds = serverNotifications.map((n) => n.id).join('|');
+        return prevIds === nextIds ? prev : serverNotifications;
+      });
     } else {
       setNotifications([]);
     }
   }, [serverNotifications]);
+
+  // Listen for demo notifications updates (same tab)
+  useEffect(() => {
+    const handler = () => {
+      refetchNotifications();
+    };
+    window.addEventListener('demo_notifications_updated', handler as any);
+    return () => window.removeEventListener('demo_notifications_updated', handler as any);
+  }, [refetchNotifications]);
 
   // Set up real-time updates for health data
   const realtimeHealth = useRealtime(
@@ -280,6 +294,22 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
     } catch (error) {
       // If API call fails, just remove from local state
       setNotifications(prev => prev.filter(n => n.id !== id));
+      // Also remove from demo storage so it doesn't come back on next refetch
+      const KEY = 'demo_notifications';
+      const removeFromStorage = (storage: Storage) => {
+        try {
+          const raw = storage.getItem(KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) return;
+          const next = parsed.filter((n: any) => n?.id !== id);
+          storage.setItem(KEY, JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+      };
+      try { removeFromStorage(sessionStorage); } catch {}
+      try { removeFromStorage(localStorage); } catch {}
     }
   };
 

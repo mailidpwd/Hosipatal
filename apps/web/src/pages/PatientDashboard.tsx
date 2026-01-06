@@ -387,6 +387,8 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
       console.log('[PatientDashboard] 🎯 Accepting pledge:', pledge.id);
       await acceptPledgeMutation.mutateAsync(pledge.id);
       console.log('[PatientDashboard] ✅ Pledge accepted successfully');
+      // Navigate to My Routine after accepting
+      onNavigate(Page.P_ROUTINE);
       // Wait a bit for the query to refetch, then show alert
       setTimeout(() => {
         alert(`✅ Challenge accepted! You have ${pledge.totalDays} days to complete: ${pledge.goal}`);

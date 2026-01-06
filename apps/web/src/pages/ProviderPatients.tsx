@@ -1879,6 +1879,24 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                         
                         // Dispatch custom event for same-tab listeners (storage event only fires cross-tab)
                         window.dispatchEvent(new Event('demo_pledges_updated'));
+
+                        // Create a single demo notification ONLY when pledge is created
+                        try {
+                          const KEY = 'demo_notifications';
+                          const notif = {
+                            id: `n-pledge-${normalizedPledge.id}`,
+                            message: `Pledge created for ${selectedPatientForPledge?.name || 'Michael Chen'}`,
+                            type: 'success',
+                            timestamp: new Date().toISOString(),
+                          };
+                          const list = [notif];
+                          sessionStorage.setItem(KEY, JSON.stringify(list));
+                          localStorage.setItem(KEY, JSON.stringify(list));
+                          // Notify same-tab listeners
+                          window.dispatchEvent(new Event('demo_notifications_updated'));
+                        } catch (e) {
+                          console.warn('[ProviderPatients] Failed to write demo notification:', e);
+                        }
                         
                         console.log('[ProviderPatients] ✅ Saved pledge to sessionStorage + localStorage:', {
                           id: normalizedPledge.id,
