@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { registerSW } from 'virtual:pwa-register';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -9,6 +10,32 @@ if (!rootElement) {
 }
 
 try {
+  // Register service worker with safety: if it fails (often due to cached workbox chunk),
+  // automatically unregister old SWs + clear caches so the app recovers without manual user steps.
+  if ('serviceWorker' in navigator) {
+    registerSW({
+      immediate: true,
+      onRegisterError(error) {
+        console.warn('[PWA] Service worker registration failed. Cleaning up...', error);
+        Promise.all([
+          navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((r) => r.unregister()))),
+          (typeof caches !== 'undefined'
+            ? caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+            : Promise.resolve()),
+        ])
+          .catch((e) => console.warn('[PWA] Cleanup failed:', e))
+          .finally(() => {
+            // Reload once after cleanup to fetch fresh assets
+            try {
+              window.location.reload();
+            } catch {
+              // ignore
+            }
+          });
+      },
+    });
+  }
+
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>

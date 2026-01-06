@@ -6,11 +6,14 @@ import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
+  const isDev = mode === 'development';
   return {
     plugins: [
       tailwindcss(), 
       react(), 
       VitePWA({
+        // We'll manually register the SW so we can recover from bad cached SW/workbox chunks.
+        injectRegister: null,
         registerType: "autoUpdate",
         manifest: {
           name: "RDM Health",
@@ -19,7 +22,12 @@ export default defineConfig(({ mode }) => {
           theme_color: "#0df2df",
         },
         pwaAssets: { disabled: false, config: true },
-        devOptions: { enabled: true },
+        devOptions: { enabled: isDev },
+        workbox: {
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
+        },
       })
     ],
     resolve: {
