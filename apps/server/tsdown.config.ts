@@ -6,4 +6,5 @@ export default defineConfig({
   outDir: "./dist",
   clean: true,
   noExternal: [/@hosipatal\/.*/],
+  outExtension: () => ({ js: ".js" }), // Output .js for better Vercel compatibility
 });
