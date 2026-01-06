@@ -145,17 +145,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await authService.logout();
+      try {
+        // Try to logout on server, but don't wait too long
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Logout timeout')), 500);
+        });
+        
+        await Promise.race([
+          authService.logout(),
+          timeoutPromise,
+        ]);
+      } catch (error: any) {
+        // In demo mode or if API fails, just continue with local logout
+        console.log('[AuthContext] Logout API call failed or timed out, continuing with local logout');
+      }
     },
     onSuccess: () => {
       setUser(null);
       queryClient.clear();
+      // Clear auth cache
+      queryClient.removeQueries({ queryKey: ['auth', 'me'] });
       // Redirect will be handled by App.tsx
     },
     onError: (error: any) => {
       // Even if logout fails on server, clear local state
       setUser(null);
       queryClient.clear();
+      queryClient.removeQueries({ queryKey: ['auth', 'me'] });
       console.error('Logout error:', error);
     },
   });

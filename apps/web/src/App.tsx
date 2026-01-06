@@ -44,7 +44,7 @@ const AppContent = () => {
   const [currentPage, setCurrentPage] = React.useState<Page>(Page.P_DASHBOARD);
   const { notifications, dismissNotification } = useRealTime();
   const { navigationState } = useNavigation();
-  const { user } = useAuth();
+  const { user, logout: authLogout } = useAuth();
 
   // Set initial page based on user role
   useEffect(() => {
@@ -66,6 +66,10 @@ const AppContent = () => {
       if (userRole !== role) {
         setRole(userRole);
       }
+    } else if (!user && role !== UserRole.NONE) {
+      // If user is null, reset to NONE
+      setRole(UserRole.NONE);
+      setCurrentPage(Page.P_DASHBOARD);
     }
   }, [user, role]);
 
@@ -74,8 +78,38 @@ const AppContent = () => {
     // User is already set in auth context by Auth.tsx calling authLogin
   };
 
-  const handleLogout = () => {
-    setRole(UserRole.NONE);
+  const handleLogout = async () => {
+    try {
+      // Call auth context logout to clear user and cache
+      await authLogout();
+      
+      // Clear all sessionStorage data
+      try {
+        sessionStorage.removeItem('userId');
+        sessionStorage.removeItem('providerId');
+        sessionStorage.removeItem('adminId');
+        sessionStorage.removeItem('demo_pledges');
+        console.log('[App] ✅ Cleared sessionStorage on logout');
+      } catch (e) {
+        console.warn('[App] Failed to clear sessionStorage:', e);
+      }
+      
+      // Reset role and page
+      setRole(UserRole.NONE);
+      setCurrentPage(Page.P_DASHBOARD);
+      
+      console.log('[App] ✅ Logout completed');
+    } catch (error: any) {
+      console.error('[App] Logout error:', error);
+      // Even if logout fails, clear everything locally
+      try {
+        sessionStorage.clear();
+      } catch (e) {
+        // Ignore
+      }
+      setRole(UserRole.NONE);
+      setCurrentPage(Page.P_DASHBOARD);
+    }
   };
 
   const renderContent = () => {
