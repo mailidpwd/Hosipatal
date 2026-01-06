@@ -1880,23 +1880,23 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                         // Dispatch custom event for same-tab listeners (storage event only fires cross-tab)
                         window.dispatchEvent(new Event('demo_pledges_updated'));
 
-                        // Create a single demo notification ONLY when pledge is created
-                        try {
-                          const KEY = 'demo_notifications';
-                          const notif = {
-                            id: `n-pledge-${normalizedPledge.id}`,
-                            message: `Pledge created for ${selectedPatientForPledge?.name || 'Michael Chen'}`,
-                            type: 'success',
-                            timestamp: new Date().toISOString(),
-                          };
-                          const list = [notif];
-                          sessionStorage.setItem(KEY, JSON.stringify(list));
-                          localStorage.setItem(KEY, JSON.stringify(list));
-                          // Notify same-tab listeners
-                          window.dispatchEvent(new Event('demo_notifications_updated'));
-                        } catch (e) {
-                          console.warn('[ProviderPatients] Failed to write demo notification:', e);
-                        }
+                        // Notifications disabled
+                        // try {
+                        //   const KEY = 'demo_notifications';
+                        //   const notif = {
+                        //     id: `n-pledge-${normalizedPledge.id}`,
+                        //     message: `Pledge created for ${selectedPatientForPledge?.name || 'Michael Chen'}`,
+                        //     type: 'success',
+                        //     timestamp: new Date().toISOString(),
+                        //   };
+                        //   const list = [notif];
+                        //   sessionStorage.setItem(KEY, JSON.stringify(list));
+                        //   localStorage.setItem(KEY, JSON.stringify(list));
+                        //   // Notify same-tab listeners
+                        //   window.dispatchEvent(new Event('demo_notifications_updated'));
+                        // } catch (e) {
+                        //   console.warn('[ProviderPatients] Failed to write demo notification:', e);
+                        // }
                         
                         console.log('[ProviderPatients] ✅ Saved pledge to sessionStorage + localStorage:', {
                           id: normalizedPledge.id,
@@ -1926,10 +1926,10 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
 
                       // Dismiss loading toast and show success
                       toast.dismiss(loadingToast);
-                      toast.success('Pledge Activated Successfully!', {
-                        description: `${pledgeData.rdmAmount} RDM allocated for ${selectedPatientForPledge.name}. The patient has been notified and can track progress in real-time.`,
-                        duration: 5000,
-                      });
+                      // toast.success('Pledge Activated Successfully!', {
+                      //   description: `${pledgeData.rdmAmount} RDM allocated for ${selectedPatientForPledge.name}. The patient has been notified and can track progress in real-time.`,
+                      //   duration: 5000,
+                      // });
 
                       // Close modal after a short delay
                       setTimeout(() => {
@@ -1951,10 +1951,10 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                   } catch (error: any) {
                     console.error('Error creating pledge:', error);
                     toast.dismiss(loadingToast);
-                    toast.error('Failed to Create Pledge', {
-                      description: error?.message || 'Please try again.',
-                      duration: 4000,
-                    });
+                    // toast.error('Failed to Create Pledge', {
+                    //   description: error?.message || 'Please try again.',
+                    //   duration: 4000,
+                    // });
                     setIsCreatingPledge(false);
                   }
                 }}

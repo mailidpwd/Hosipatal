@@ -26,13 +26,8 @@ export class NotificationService extends BaseService {
           timestamp: new Date(notif.timestamp),
         })) as Notification[];
       } catch {
-        // Demo fallback
-        const now = new Date();
-        const items: Notification[] = [
-          { id: `n-${Date.now()}`, message: 'Pledge created for Michael Chen', type: 'success', timestamp: now },
-          { id: `n-${Date.now() - 600000}`, message: 'Weekly report is ready', type: 'info', timestamp: new Date(now.getTime() - 600000) },
-        ];
-        return (filters?.limit ? items.slice(0, filters.limit) : items) as Notification[];
+        // Demo fallback - return empty array (notifications disabled)
+        return [] as Notification[];
       }
     });
   }
