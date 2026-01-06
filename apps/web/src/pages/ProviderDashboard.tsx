@@ -177,9 +177,9 @@ export const ProviderDashboard = () => {
     queryFn: async () => {
       console.log('[ProviderDashboard] Fetching dashboard with providerId:', stableProviderId);
       try {
-        // Add timeout to prevent hanging (10 seconds)
+        // Short timeout (3 seconds) - if API doesn't respond quickly, use demo data
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Request timeout')), 10000);
+          setTimeout(() => reject(new Error('Request timeout')), 3000);
         });
         
         const result = await Promise.race([
@@ -191,28 +191,46 @@ export const ProviderDashboard = () => {
         return result;
       } catch (error: any) {
         console.warn('[ProviderDashboard] API call failed, using demo data:', error?.message);
-        // Return demo data if API fails (for demo mode or network issues)
-        return getDemoDashboardData(stableProviderId);
+        // Return demo data immediately if API fails (for demo mode or network issues)
+        const demoData = getDemoDashboardData(stableProviderId);
+        console.log('[ProviderDashboard] Using demo data:', demoData);
+        return demoData;
       }
     },
     refetchInterval: 30000, // Refetch every 30 seconds
     enabled: !authLoading, // Always fetch once auth is done (don't require providerId for debugging)
-    retry: 1, // Only retry once
-    retryDelay: 1000,
+    retry: false, // Don't retry - use demo data immediately on failure
+    staleTime: 0, // Always consider data fresh for demo mode
   });
+
+  // Use demo data if available, otherwise fall back to realtime data
+  const data = dashboardData || {
+    totalPatients: 0,
+    criticalCount: 0,
+    rating: 0,
+    rdmBalance: 0,
+    criticalPatients: [],
+    schedule: [],
+    recentWishes: [],
+  };
+
+  // Use data from dashboard (demo or real) instead of realtime hook
+  const displayCriticalAlerts = data.criticalPatients || criticalAlerts;
+  const displaySchedule = data.schedule || schedule;
+  const displayRecentWishes = data.recentWishes || recentTips || [];
 
   // Calculate time left for "now" schedule items
   // Using useRef to track previous values and prevent infinite loops
-  const scheduleRef = React.useRef(schedule);
+  const scheduleRef = React.useRef(displaySchedule);
   const intervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     // Only update ref if schedule actually changed (by length or content)
-    const scheduleChanged = schedule.length !== scheduleRef.current.length ||
-      JSON.stringify(schedule.map(s => s.id)) !== JSON.stringify(scheduleRef.current.map(s => s.id));
+    const scheduleChanged = displaySchedule.length !== scheduleRef.current.length ||
+      JSON.stringify(displaySchedule.map(s => s.id)) !== JSON.stringify(scheduleRef.current.map(s => s.id));
 
     if (scheduleChanged) {
-      scheduleRef.current = schedule;
+      scheduleRef.current = displaySchedule;
     }
 
     const updateTimes = () => {
@@ -264,7 +282,7 @@ export const ProviderDashboard = () => {
         intervalRef.current = null;
       }
     };
-  }, [schedule.length]); // Only depend on schedule length to prevent infinite loops
+  }, [displaySchedule.length]); // Only depend on schedule length to prevent infinite loops
 
   const isLoading = authLoading || dashboardLoading || realtimeLoading;
   const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
@@ -287,16 +305,6 @@ export const ProviderDashboard = () => {
       </div>
     );
   }
-
-  const data = dashboardData || {
-    totalPatients: 0,
-    criticalCount: 0,
-    rating: 0,
-    rdmBalance: 0,
-    criticalPatients: [],
-    schedule: [],
-    recentWishes: [],
-  };
 
   return (
     <div className="w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 space-y-6 pb-24 md:pb-12 animate-[fadeIn_0.5s_ease-out]">
@@ -339,7 +347,7 @@ export const ProviderDashboard = () => {
             <Icon name="warning" className="text-red-500 text-lg" />
           </div>
           <div>
-            <p className="text-red-900 dark:text-red-100 text-2xl font-bold leading-none">{data.criticalCount || criticalAlerts.length}</p>
+            <p className="text-red-900 dark:text-red-100 text-2xl font-bold leading-none">{data.criticalCount || displayCriticalAlerts.length}</p>
             <p className="text-red-600 dark:text-red-300 text-[10px] font-medium mt-1">Action Req.</p>
           </div>
         </div>
@@ -399,15 +407,16 @@ export const ProviderDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                    {criticalAlerts.length === 0 ? (
+                    {displayCriticalAlerts.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
                           No critical alerts at this time
                         </td>
                       </tr>
                     ) : (
-                      criticalAlerts.slice(0, 3).map((alert) => {
-                        const patient = data.criticalPatients?.find((p: any) => p.patientId === alert.patientId || p.id === alert.patientId);
+                      displayCriticalAlerts.slice(0, 3).map((alert: any) => {
+                        // Alert already contains patient data if from demo data, otherwise find patient
+                        const patient = alert.name ? alert : data.criticalPatients?.find((p: any) => p.patientId === alert.patientId || p.id === alert.patientId);
                         const severityColors = {
                           high: { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200', dot: 'bg-red-600', label: 'High Risk' },
                           moderate: { bg: alert.type === 'missed_meds' ? 'bg-orange-100' : 'bg-yellow-100', text: alert.type === 'missed_meds' ? 'text-orange-800' : 'text-yellow-800', border: alert.type === 'missed_meds' ? 'border-orange-200' : 'border-yellow-200', dot: alert.type === 'missed_meds' ? 'bg-orange-500' : 'bg-yellow-500', label: alert.type === 'missed_meds' ? 'Adherence Risk' : 'Moderate' },
@@ -457,13 +466,14 @@ export const ProviderDashboard = () => {
 
               {/* Mobile Card View */}
               <div className="md:hidden flex flex-col gap-3 p-3 bg-slate-50 dark:bg-black/20">
-                {criticalAlerts.length === 0 ? (
+                {displayCriticalAlerts.length === 0 ? (
                   <div className="p-3 bg-white dark:bg-surface-dark rounded-lg text-center text-slate-500 dark:text-slate-400 text-sm">
                     No critical alerts at this time
                   </div>
                 ) : (
-                  criticalAlerts.slice(0, 3).map((alert) => {
-                    const patient = data.criticalPatients?.find((p: any) => p.patientId === alert.patientId || p.id === alert.patientId);
+                  displayCriticalAlerts.slice(0, 3).map((alert: any) => {
+                    // Alert already contains patient data if from demo data, otherwise find patient
+                    const patient = alert.name ? alert : data.criticalPatients?.find((p: any) => p.patientId === alert.patientId || p.id === alert.patientId);
                     return (
                       <div key={alert.id} className="p-3 bg-white dark:bg-surface-dark border-l-4 border-l-red-500 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
                         <div className="flex items-start gap-3">
@@ -500,12 +510,12 @@ export const ProviderDashboard = () => {
               <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-              {schedule.length === 0 ? (
+              {displaySchedule.length === 0 ? (
                 <div className="col-span-full p-4 text-center text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-700">
                   No schedule items for today
                 </div>
               ) : (
-                schedule.map((item) => {
+                displaySchedule.map((item) => {
                   const borderColors = {
                     done: 'border-l-green-500',
                     now: 'border-l-primary',
@@ -554,12 +564,12 @@ export const ProviderDashboard = () => {
           </div>
           <div className="flex flex-col bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-700 h-full overflow-hidden shadow-sm">
             <div className="flex-1 overflow-y-auto p-4 space-y-5">
-              {recentTips.length === 0 ? (
+              {displayRecentWishes.length === 0 ? (
                 <div className="text-center text-slate-500 dark:text-slate-400 text-sm py-8">
                   No recent tips or wishes
                 </div>
               ) : (
-                recentTips.map((tip, index) => {
+                displayRecentWishes.map((tip, index) => {
                   const timeAgo = new Date(tip.timestamp);
                   const hoursAgo = Math.floor((Date.now() - timeAgo.getTime()) / (1000 * 60 * 60));
                   const daysAgo = Math.floor(hoursAgo / 24);

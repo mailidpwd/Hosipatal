@@ -15,6 +15,75 @@ interface ProviderPatientsProps {
   onNavigate: (page: Page) => void;
 }
 
+// Demo data matching backend in-memory store for staff-1 (Dr. Sarah Smith)
+const getDemoPatientsData = (providerId: string) => {
+  return {
+    patients: [
+      {
+        id: '83921',
+        name: 'Michael Chen',
+        age: 45,
+        gender: 'Male',
+        patientId: '#83921',
+        diagnosis: 'Hypertension',
+        adherenceScore: 75,
+        rdmEarnings: 1250,
+        status: 'critical' as const,
+        avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
+      },
+      {
+        id: '99201',
+        name: 'Sarah Jenkins',
+        age: 38,
+        gender: 'Female',
+        patientId: '#99201',
+        diagnosis: 'Diabetes T2',
+        adherenceScore: 65,
+        rdmEarnings: 890,
+        status: 'critical' as const,
+        avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASAnY87FJ5OkyNB5WG4FKNYFJ883CuUQ22G2YHq91lDtv8vYETphUQUHuQc-HDuR651yMslSiRyt-dPUVof1lBJKmFKN0iJQNX5Nk_cGr88XPMAP3L58u19c57TE9XHMtYbPoiYZVcrPIL9hk5MhT2Qkzsq1BdvWNlToQva6bw_dZZ5-mJ_2D7VlSzgG9RYv_VubmD-1TNs_iLLzsY1j1SvO0F6Klf0tiAqn_AuzpQJjhTuGoIEenEgNQj0xthNRANtj8QqvPsOXPH',
+      },
+      {
+        id: '1129',
+        name: 'David Kim',
+        age: 52,
+        gender: 'Male',
+        patientId: '#1129',
+        diagnosis: 'Heart Disease',
+        adherenceScore: 88,
+        rdmEarnings: 2100,
+        status: 'stable' as const,
+        avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
+      },
+      {
+        id: '4456',
+        name: 'Emily Rodriguez',
+        age: 34,
+        gender: 'Female',
+        patientId: '#4456',
+        diagnosis: 'Asthma',
+        adherenceScore: 92,
+        rdmEarnings: 1850,
+        status: 'stable' as const,
+        avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASAnY87FJ5OkyNB5WG4FKNYFJ883CuUQ22G2YHq91lDtv8vYETphUQUHuQc-HDuR651yMslSiRyt-dPUVof1lBJKmFKN0iJQNX5Nk_cGr88XPMAP3L58u19c57TE9XHMtYbPoiYZVcrPIL9hk5MhT2Qkzsq1BdvWNlToQva6bw_dZZ5-mJ_2D7VlSzgG9RYv_VubmD-1TNs_iLLzsY1j1SvO0F6Klf0tiAqn_AuzpQJjhTuGoIEenEgNQj0xthNRANtj8QqvPsOXPH',
+      },
+      {
+        id: '7788',
+        name: 'James Wilson',
+        age: 61,
+        gender: 'Male',
+        patientId: '#7788',
+        diagnosis: 'COPD',
+        adherenceScore: 70,
+        rdmEarnings: 1100,
+        status: 'at-risk' as const,
+        avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
+      },
+    ],
+    total: 5,
+  };
+};
+
 export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }) => {
   const [showPledgeModal, setShowPledgeModal] = useState(false);
   const [selectedPatientForPledge, setSelectedPatientForPledge] = useState<any>(null);
@@ -302,13 +371,37 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
   // Fetch patients with filters - filtered by providerId
   const { data: patientsData, isLoading: patientsLoading, error } = useQuery({
     queryKey: ['provider', 'patients', stableProviderId, searchQuery, statusFilter],
-    queryFn: () => providerService.getPatients({
-      search: searchQuery || undefined,
-      status: statusFilter,
-      providerId: stableProviderId,
-    }),
+    queryFn: async () => {
+      console.log('[ProviderPatients] Fetching patients with providerId:', stableProviderId);
+      try {
+        // Short timeout (3 seconds) - if API doesn't respond quickly, use demo data
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 3000);
+        });
+        
+        const result = await Promise.race([
+          providerService.getPatients({
+            search: searchQuery || undefined,
+            status: statusFilter,
+            providerId: stableProviderId,
+          }),
+          timeoutPromise,
+        ]);
+        
+        console.log('[ProviderPatients] Patients result:', result);
+        return result;
+      } catch (error: any) {
+        console.warn('[ProviderPatients] API call failed, using demo data:', error?.message);
+        // Return demo data immediately if API fails (for demo mode or network issues)
+        const demoData = getDemoPatientsData(stableProviderId);
+        console.log('[ProviderPatients] Using demo data:', demoData);
+        return demoData;
+      }
+    },
     refetchInterval: 30000, // Refetch every 30 seconds
     enabled: !authLoading, // Always fetch once auth is loaded
+    retry: false, // Don't retry - use demo data immediately on failure
+    staleTime: 0, // Always consider data fresh for demo mode
   });
 
   // Get critical alerts - filtered by providerId
