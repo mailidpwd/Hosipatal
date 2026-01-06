@@ -410,6 +410,20 @@ export const PatientGoals = () => {
     refetchInterval: 30000,
   });
 
+  // Listen for demo goals updates
+  useEffect(() => {
+    const handleGoalsUpdate = () => {
+      console.log('[PatientGoals] 🔄 Demo goals updated, refetching...');
+      refetchActive();
+    };
+    
+    window.addEventListener('demo_goals_updated', handleGoalsUpdate);
+    
+    return () => {
+      window.removeEventListener('demo_goals_updated', handleGoalsUpdate);
+    };
+  }, [refetchActive]);
+
   // Fetch goal history
   const { data: goalHistory = [], isLoading: historyLoading } = useQuery({
     queryKey: ['goals', 'history'],

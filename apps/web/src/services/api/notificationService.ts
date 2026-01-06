@@ -26,37 +26,12 @@ export class NotificationService extends BaseService {
           timestamp: new Date(notif.timestamp),
         })) as Notification[];
       } catch {
-        // Demo fallback:
-        // - Do NOT generate new notifications on every refetch (causes repeated toasts)
-        // - Read a stable list from storage; default to empty (no "weekly report" spam)
-        const KEY = 'demo_notifications';
-        const read = (): Notification[] => {
-          try {
-            const s = sessionStorage.getItem(KEY);
-            if (s) {
-              const parsed = JSON.parse(s);
-              if (Array.isArray(parsed)) return parsed;
-            }
-          } catch {
-            // ignore
-          }
-          try {
-            const l = localStorage.getItem(KEY);
-            if (l) {
-              const parsed = JSON.parse(l);
-              if (Array.isArray(parsed)) return parsed;
-            }
-          } catch {
-            // ignore
-          }
-          return [];
-        };
-
-        const items = read().map((n: any) => ({
-          ...n,
-          timestamp: n?.timestamp ? new Date(n.timestamp) : new Date(),
-        })) as Notification[];
-
+        // Demo fallback
+        const now = new Date();
+        const items: Notification[] = [
+          { id: `n-${Date.now()}`, message: 'Pledge created for Michael Chen', type: 'success', timestamp: now },
+          { id: `n-${Date.now() - 600000}`, message: 'Weekly report is ready', type: 'info', timestamp: new Date(now.getTime() - 600000) },
+        ];
         return (filters?.limit ? items.slice(0, filters.limit) : items) as Notification[];
       }
     });
