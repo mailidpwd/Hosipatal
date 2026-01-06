@@ -30,6 +30,58 @@ try {
     }
   }
   
+  // NUCLEAR OPTION: Remove ALL notification DOM elements immediately and continuously
+  const removeNotifications = () => {
+    try {
+      // Remove sonner toasts
+      const sonnerToasts = document.querySelectorAll('[data-sonner-toaster], [data-sonner-toast], [data-sonner-toast-wrapper]');
+      sonnerToasts.forEach(el => el.remove());
+      
+      // Remove any elements with toast/notification classes
+      const toastElements = document.querySelectorAll('.toast, .toaster, [class*="toast"], [class*="notification"]');
+      toastElements.forEach(el => el.remove());
+      
+      // Remove any elements with toast/notification IDs
+      const toastById = document.querySelectorAll('[id*="toast"], [id*="notification"]');
+      toastById.forEach(el => el.remove());
+      
+      // Hide any remaining notification containers
+      const containers = document.querySelectorAll('[role="status"], [aria-live]');
+      containers.forEach(el => {
+        const text = el.textContent?.toLowerCase() || '';
+        if (text.includes('pledge') || text.includes('weekly') || text.includes('report')) {
+          (el as HTMLElement).style.display = 'none';
+          el.remove();
+        }
+      });
+    } catch (e) {
+      // Silent fail
+    }
+  };
+  
+  // Run immediately
+  if (typeof document !== 'undefined') {
+    removeNotifications();
+    
+    // Run after DOM loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', removeNotifications);
+    } else {
+      removeNotifications();
+    }
+    
+    // Run periodically to catch any that appear later (every 100ms)
+    setInterval(removeNotifications, 100);
+    
+    // Also use MutationObserver to catch new elements as they're added
+    if (typeof MutationObserver !== 'undefined') {
+      const observer = new MutationObserver(() => {
+        removeNotifications();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+  }
+  
   // Register service worker with safety: if it fails (often due to cached workbox chunk),
   // automatically unregister old SWs + clear caches so the app recovers without manual user steps.
   if ('serviceWorker' in navigator) {
