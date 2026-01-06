@@ -138,7 +138,16 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
       console.log('[PatientDashboard] userIdRef.current:', userIdRef.current);
       
       try {
-        const pledges = await userService.getMyPledges(patientId);
+        // Short timeout (2 seconds) - if API doesn't respond quickly, check sessionStorage
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 2000);
+        });
+        
+        const pledges = await Promise.race([
+          userService.getMyPledges(patientId),
+          timeoutPromise,
+        ]) as Pledge[];
+        
         console.log('[PatientDashboard] 📦 Received pledges:', pledges);
         console.log('[PatientDashboard] 📦 Pledges array check:', Array.isArray(pledges), pledges?.length);
         
@@ -153,10 +162,28 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
             goal: p.goal
           })));
         } else {
-          console.log('[PatientDashboard] ⚠️ No pledges returned - check backend logs');
+          console.log('[PatientDashboard] ⚠️ No pledges returned - checking sessionStorage');
         }
         return result;
-      } catch (error) {
+      } catch (error: any) {
+        console.warn('[PatientDashboard] API call failed, checking sessionStorage:', error?.message);
+        // Demo mode fallback - check sessionStorage
+        try {
+          const storedPledges = sessionStorage.getItem('demo_pledges');
+          if (storedPledges) {
+            const pledges = JSON.parse(storedPledges);
+            // Filter pledges for this user
+            const userPledges = pledges.filter((p: Pledge) => 
+              p.patientId === patientId || p.patientId === '83921' || p.patientId?.includes('83921')
+            );
+            if (userPledges.length > 0) {
+              console.log('[PatientDashboard] ✅ Found', userPledges.length, 'pledge(s) in sessionStorage');
+              return userPledges;
+            }
+          }
+        } catch (e) {
+          console.warn('[PatientDashboard] Failed to parse stored pledges:', e);
+        }
         console.error('[PatientDashboard] ❌ Error fetching pledges:', error);
         return [];
       }
@@ -165,7 +192,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
     refetchInterval: 30000,
     staleTime: 0,
     gcTime: 5 * 60 * 1000,
-    retry: 2,
+    retry: false, // Don't retry - use demo data immediately
     retryDelay: 1000,
   });
 

@@ -1848,6 +1848,17 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                     );
 
                     if (pledge) {
+                      // Store pledge in sessionStorage for demo mode
+                      try {
+                        const storedPledges = sessionStorage.getItem('demo_pledges');
+                        const pledges = storedPledges ? JSON.parse(storedPledges) : [];
+                        pledges.push(pledge);
+                        sessionStorage.setItem('demo_pledges', JSON.stringify(pledges));
+                        console.log('[ProviderPatients] ✅ Stored pledge in sessionStorage:', pledge.id);
+                      } catch (e) {
+                        console.warn('[ProviderPatients] Failed to store pledge:', e);
+                      }
+
                       // Invalidate queries to refresh patient data in real-time
                       queryClient.invalidateQueries({ queryKey: ['provider', 'patients'] });
                       queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard'] });
@@ -1857,6 +1868,7 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                       // CRITICAL: Invalidate patient pledges query so it shows up on patient dashboard
                       queryClient.invalidateQueries({ queryKey: ['patient', 'pledges'] });
                       queryClient.invalidateQueries({ queryKey: ['patient', 'pledges', selectedPatientForPledge.id] });
+                      queryClient.invalidateQueries({ queryKey: ['patient', 'pledges', '83921'] });
 
                       // Get patient email from profile or find in patients list
                       const patient = patients.find(p => p.id === selectedPatientForPledge.id || p.patientId === selectedPatientForPledge.id);

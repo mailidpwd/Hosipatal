@@ -43,8 +43,33 @@ export class UserService extends BaseService {
    */
   async getMyPledges(userId?: string): Promise<Pledge[]> {
     return this.handleRequest(async () => {
-      const response = await (client as any).provider.getMyPledges({ userId });
-      return response as Pledge[];
+      try {
+        const response = await (client as any).provider.getMyPledges({ userId });
+        return response as Pledge[];
+      } catch (error: any) {
+        // Demo mode fallback - check sessionStorage for created pledges
+        if (userId === '83921' || userId?.includes('83921')) {
+          console.log('[UserService] Using demo pledges data for Michael Chen');
+          try {
+            const storedPledges = sessionStorage.getItem('demo_pledges');
+            if (storedPledges) {
+              const pledges = JSON.parse(storedPledges);
+              // Filter pledges for this user
+              const userPledges = pledges.filter((p: Pledge) => 
+                p.patientId === userId || p.patientId === '83921' || p.patientId?.includes('83921')
+              );
+              if (userPledges.length > 0) {
+                return userPledges;
+              }
+            }
+          } catch (e) {
+            console.warn('[UserService] Failed to parse stored pledges:', e);
+          }
+          // Return empty array if no stored pledges
+          return [];
+        }
+        throw error; // Re-throw if not demo patient
+      }
     });
   }
 
@@ -53,8 +78,43 @@ export class UserService extends BaseService {
    */
   async acceptPledge(pledgeId: string): Promise<Pledge> {
     return this.handleRequest(async () => {
-      const response = await (client as any).provider.acceptPledge({ pledgeId });
-      return response as Pledge;
+      try {
+        const response = await (client as any).provider.acceptPledge({ pledgeId });
+        return response as Pledge;
+      } catch (error: any) {
+        // Demo mode fallback - update pledge in sessionStorage
+        console.log('[UserService] Using demo acceptPledge for pledge:', pledgeId);
+        try {
+          const storedPledges = sessionStorage.getItem('demo_pledges');
+          if (storedPledges) {
+            const pledges = JSON.parse(storedPledges);
+            const pledgeIndex = pledges.findIndex((p: Pledge) => p.id === pledgeId);
+            if (pledgeIndex !== -1) {
+              const pledge = pledges[pledgeIndex];
+              const now = new Date();
+              const endDate = new Date(now);
+              endDate.setDate(endDate.getDate() + (pledge.totalDays || 7));
+              
+              const updatedPledge: Pledge = {
+                ...pledge,
+                accepted: true,
+                acceptedAt: now.toISOString(),
+                startDate: now.toISOString(),
+                endDate: endDate.toISOString(),
+                status: 'active',
+              };
+              
+              pledges[pledgeIndex] = updatedPledge;
+              sessionStorage.setItem('demo_pledges', JSON.stringify(pledges));
+              console.log('[UserService] ✅ Updated pledge in sessionStorage');
+              return updatedPledge;
+            }
+          }
+        } catch (e) {
+          console.warn('[UserService] Failed to update stored pledge:', e);
+        }
+        throw error; // Re-throw if not found
+      }
     });
   }
 
