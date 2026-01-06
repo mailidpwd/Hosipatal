@@ -3,11 +3,17 @@ import { env } from '@hosipatal/env/server';
 
 let client: MongoClient | null = null;
 let db: Db | null = null;
+let connectionPromise: Promise<{ client: MongoClient; db: Db }> | null = null;
 
 /**
  * Connect to MongoDB
  */
 export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
+  // Reuse existing connection in serverless
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+
   if (client && db) {
     return { client, db };
   }
@@ -16,37 +22,48 @@ export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db
     throw new Error('DATABASE_URL is not set in environment variables');
   }
 
-  try {
-    console.log('🔄 Connecting to MongoDB...');
-    client = new MongoClient(env.DATABASE_URL);
+  // Create connection promise for serverless reuse
+  connectionPromise = (async () => {
 
-    await client.connect();
-    console.log('✅ Successfully connected to MongoDB');
-
-    // Extract database name from connection string or use default
-    // MongoDB connection string format: mongodb+srv://user:pass@host/dbname?options
-    let dbName = 'rdm-health'; // default
     try {
-      const url = new URL(env.DATABASE_URL);
-      dbName = url.pathname.slice(1) || url.searchParams.get('db') || 'rdm-health';
-    } catch (e) {
-      // If URL parsing fails, try to extract from connection string manually
-      const match = env.DATABASE_URL.match(/\/\/([^\/]+)\/([^?]+)/);
-      if (match && match[2]) {
-        dbName = match[2];
+      console.log('🔄 Connecting to MongoDB...');
+      client = new MongoClient(env.DATABASE_URL, {
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+      });
+
+      await client.connect();
+      console.log('✅ Successfully connected to MongoDB');
+
+      // Extract database name from connection string or use default
+      // MongoDB connection string format: mongodb+srv://user:pass@host/dbname?options
+      let dbName = 'rdm-health'; // default
+      try {
+        const url = new URL(env.DATABASE_URL);
+        dbName = url.pathname.slice(1) || url.searchParams.get('db') || 'rdm-health';
+      } catch (e) {
+        // If URL parsing fails, try to extract from connection string manually
+        const match = env.DATABASE_URL.match(/\/\/([^\/]+)\/([^?]+)/);
+        if (match && match[2]) {
+          dbName = match[2];
+        }
       }
+      db = client.db(dbName);
+
+      // Test the connection
+      await db.admin().ping();
+      console.log(`✅ Database "${dbName}" is accessible`);
+
+      return { client, db };
+    } catch (error) {
+      connectionPromise = null;
+      console.error('❌ MongoDB connection error:', error);
+      throw error;
     }
-    db = client.db(dbName);
+  })();
 
-    // Test the connection
-    await db.admin().ping();
-    console.log(`✅ Database "${dbName}" is accessible`);
-
-    return { client, db };
-  } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
-    throw error;
-  }
+  return connectionPromise;
 }
 
 /**

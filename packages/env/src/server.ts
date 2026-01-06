@@ -14,5 +14,5 @@ export const env = createEnv({
   client: {},
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.VERCEL === "1",
 });

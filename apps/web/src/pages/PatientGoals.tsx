@@ -475,7 +475,7 @@ export const PatientGoals = () => {
 
   const renderActiveGoals = () => {
     if (activeLoading) {
-      return (
+  return (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner />
         </div>
@@ -485,89 +485,89 @@ export const PatientGoals = () => {
     // Use existing hardcoded content for now, but structure it to work with real data
     return (
       <>
-        {/* Assigned by Care Team Section */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Icon name="medical_services" className="text-blue-500 text-xl" />
-            <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">Assigned by Care Team</h3>
-          </div>
-          
-          {/* Blood Pressure Card */}
-          <div 
-            ref={highlightedChallenge === 'critical-recovery-pledge' ? challengeRef : null}
-            className={`bg-white dark:bg-surface-dark rounded-2xl border shadow-sm flex flex-col md:flex-row overflow-hidden group relative transition-all duration-500 ${
-              highlightedChallenge === 'critical-recovery-pledge' 
-                ? 'border-2 border-primary shadow-lg shadow-primary/20 scale-[1.02] ring-2 ring-primary/30' 
-                : 'border-slate-200 dark:border-slate-800'
-            }`}
-          >
-            {/* Highlight indicator */}
-            {highlightedChallenge === 'critical-recovery-pledge' && (
-              <div className="absolute top-4 right-4 bg-primary text-slate-900 px-3 py-1.5 rounded-full text-xs font-bold animate-pulse flex items-center gap-2 z-20 shadow-lg">
-                <Icon name="check_circle" className="text-sm" />
-                New Challenge from Dr. Smith
-              </div>
-            )}
-            {/* Left Side: Clinical Data */}
-            <div className="p-5 md:p-6 flex-1 flex flex-col justify-between">
-                <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold uppercase tracking-wide mb-3 border border-cyan-100 dark:border-cyan-800">
-                        <Icon name="verified_user" className="text-xs" />
-                        Assigned by Dr. Smith
-                    </div>
-                    <h4 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white leading-tight mb-2">Lower Blood Pressure</h4>
-                    <p className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400">Target: <span className="text-slate-900 dark:text-white font-bold">120/80</span></p>
+          {/* Assigned by Care Team Section */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Icon name="medical_services" className="text-blue-500 text-xl" />
+              <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">Assigned by Care Team</h3>
+            </div>
+            
+            {/* Blood Pressure Card */}
+            <div 
+              ref={highlightedChallenge === 'critical-recovery-pledge' ? challengeRef : null}
+              className={`bg-white dark:bg-surface-dark rounded-2xl border shadow-sm flex flex-col md:flex-row overflow-hidden group relative transition-all duration-500 ${
+                highlightedChallenge === 'critical-recovery-pledge' 
+                  ? 'border-2 border-primary shadow-lg shadow-primary/20 scale-[1.02] ring-2 ring-primary/30' 
+                  : 'border-slate-200 dark:border-slate-800'
+              }`}
+            >
+              {/* Highlight indicator */}
+              {highlightedChallenge === 'critical-recovery-pledge' && (
+                <div className="absolute top-4 right-4 bg-primary text-slate-900 px-3 py-1.5 rounded-full text-xs font-bold animate-pulse flex items-center gap-2 z-20 shadow-lg">
+                  <Icon name="check_circle" className="text-sm" />
+                  New Challenge from Dr. Smith
                 </div>
+              )}
+                {/* Left Side: Clinical Data */}
+                <div className="p-5 md:p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300 text-[10px] font-bold uppercase tracking-wide mb-3 border border-cyan-100 dark:border-cyan-800">
+                            <Icon name="verified_user" className="text-xs" />
+                            Assigned by Dr. Smith
+                        </div>
+                        <h4 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white leading-tight mb-2">Lower Blood Pressure</h4>
+                        <p className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400">Target: <span className="text-slate-900 dark:text-white font-bold">120/80</span></p>
+                    </div>
 
-                <div className="mt-6 flex items-end gap-6 md:gap-8">
-                    {/* SVG Gauge */}
-                    <div className="relative w-32 md:w-40 h-16 md:h-20">
+                    <div className="mt-6 flex items-end gap-6 md:gap-8">
+                        {/* SVG Gauge */}
+                        <div className="relative w-32 md:w-40 h-16 md:h-20">
                         <svg className="w-full h-full overflow-visible" viewBox="0 0 100 50" aria-hidden="true">
-                            {/* Track */}
-                            <path d="M 10,50 A 40,40 0 0 1 90,50" fill="none" stroke="#f1f5f9" strokeWidth="8" strokeLinecap="round" className="dark:stroke-slate-800" />
-                            {/* Red Progress (High BP) */}
-                            <path d="M 10,50 A 40,40 0 0 1 90,50" fill="none" stroke="#ef4444" strokeWidth="8" strokeLinecap="round" strokeDasharray="126" strokeDashoffset="100" />
-                        </svg>
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 text-center">
+                                {/* Track */}
+                                <path d="M 10,50 A 40,40 0 0 1 90,50" fill="none" stroke="#f1f5f9" strokeWidth="8" strokeLinecap="round" className="dark:stroke-slate-800" />
+                                {/* Red Progress (High BP) */}
+                                <path d="M 10,50 A 40,40 0 0 1 90,50" fill="none" stroke="#ef4444" strokeWidth="8" strokeLinecap="round" strokeDasharray="126" strokeDashoffset="100" />
+                            </svg>
+                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 text-center">
                             <div className="bg-red-500 size-1.5 md:size-2 rounded-full mx-auto mb-0.5 animate-pulse"></div>
-                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current</p>
+                                <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current</p>
                             <p className="text-xl md:text-2xl font-black text-red-500 leading-none tracking-tighter">
                               <LiveBPDisplay />
                             </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-0.5 pb-0.5">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase">Last Reading:</p>
+                            <p className="text-xs md:text-sm font-bold text-slate-900 dark:text-white">Today, 9:00 AM</p>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-0.5 pb-0.5">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Last Reading:</p>
-                        <p className="text-xs md:text-sm font-bold text-slate-900 dark:text-white">Today, 9:00 AM</p>
+                </div>
+
+                {/* Right Side: Reward Vault */}
+                <div className="bg-[#fffbf0] dark:bg-amber-950/20 border-t md:border-t-0 md:border-l border-amber-100 dark:border-amber-900/30 p-5 md:p-6 md:w-72 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                    <div className="absolute top-2 right-2 text-amber-200 dark:text-amber-900/40 opacity-50 -rotate-12 pointer-events-none">
+                            <Icon name="lock_open" className="text-6xl" />
                     </div>
+                    
+                    <div className="size-12 rounded-full bg-white dark:bg-surface-dark shadow-sm border border-amber-100 dark:border-amber-800 flex items-center justify-center text-amber-400 mb-3 relative z-10">
+                        <Icon name="lock" className="text-2xl" />
+                    </div>
+
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight relative z-10">1,000 RDM</h3>
+                    <span className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 uppercase tracking-widest mb-4 relative z-10">Locked in Vault</span>
+
+                    <div className="flex items-start gap-1.5 text-left relative z-10 justify-center">
+                        <p className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 leading-tight max-w-[160px]">
+                            Unlocks upon verified reading &lt; 120/80.
+                        </p>
+                    </div>
+                    
+                    <p className="text-[10px] font-bold text-red-500 mt-2 relative z-10">Expiring in 5 Days.</p>
                 </div>
             </div>
-
-            {/* Right Side: Reward Vault */}
-            <div className="bg-[#fffbf0] dark:bg-amber-950/20 border-t md:border-t-0 md:border-l border-amber-100 dark:border-amber-900/30 p-5 md:p-6 md:w-72 flex flex-col items-center justify-center text-center relative overflow-hidden">
-                <div className="absolute top-2 right-2 text-amber-200 dark:text-amber-900/40 opacity-50 -rotate-12 pointer-events-none">
-                        <Icon name="lock_open" className="text-6xl" />
-                </div>
-                
-                <div className="size-12 rounded-full bg-white dark:bg-surface-dark shadow-sm border border-amber-100 dark:border-amber-800 flex items-center justify-center text-amber-400 mb-3 relative z-10">
-                    <Icon name="lock" className="text-2xl" />
-                </div>
-
-                <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight relative z-10">1,000 RDM</h3>
-                <span className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 uppercase tracking-widest mb-4 relative z-10">Locked in Vault</span>
-
-                <div className="flex items-start gap-1.5 text-left relative z-10 justify-center">
-                    <p className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 leading-tight max-w-[160px]">
-                        Unlocks upon verified reading &lt; 120/80.
-                    </p>
-                </div>
-                
-                <p className="text-[10px] font-bold text-red-500 mt-2 relative z-10">Expiring in 5 Days.</p>
-            </div>
-          </div>
-          
-          <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
-              <span className="flex items-center gap-1.5"><Icon name="info" className="text-sm" /> Verify your progress to unlock funds.</span>
+            
+            <div className="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+                <span className="flex items-center gap-1.5"><Icon name="info" className="text-sm" /> Verify your progress to unlock funds.</span>
               <button 
                 onClick={() => {
                   const bpGoal = activeGoals.find(g => g.category === 'bp' && g.assignedByRole === 'doctor');
@@ -585,17 +585,17 @@ export const PatientGoals = () => {
                 title="Submit blood pressure reading"
                 aria-label="Submit blood pressure reading"
               >
-                  Submit Reading <Icon name="arrow_forward" className="text-sm" />
-              </button>
-          </div>
-        </section>
+                    Submit Reading <Icon name="arrow_forward" className="text-sm" />
+                </button>
+            </div>
+          </section>
 
-        {/* Personal Challenges Section */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Icon name="emoji_events" className="text-primary text-xl" />
-            <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">Personal Challenges</h3>
-          </div>
+          {/* Personal Challenges Section */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Icon name="emoji_events" className="text-primary text-xl" />
+              <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">Personal Challenges</h3>
+            </div>
 
           {(() => {
             const personalGoals = activeGoals.filter(goal => goal.assignedByRole !== 'doctor');
@@ -639,8 +639,8 @@ export const PatientGoals = () => {
 
                   return (
                     <div key={goal.id} className="bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-800 p-5 md:p-6 shadow-sm">
-                      <div className="flex justify-between items-start mb-5">
-                        <div className="flex items-center gap-4">
+                  <div className="flex justify-between items-start mb-5">
+                      <div className="flex items-center gap-4">
                           <div className={`size-12 md:size-14 rounded-xl ${categoryColor.bg} flex items-center justify-center ${categoryColor.text} shrink-0`}>
                             <Icon name={getCategoryIcon(goal.category)} className="text-2xl md:text-3xl" />
                           </div>
@@ -648,16 +648,16 @@ export const PatientGoals = () => {
                             <h4 className="text-base md:text-lg font-bold text-slate-900 dark:text-white">{goal.title}</h4>
                             <p className="text-[10px] md:text-xs font-medium text-slate-400 uppercase tracking-wide mt-0.5">Challenge ID: {challengeId}</p>
                           </div>
-                        </div>
-                        <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-lg">Active Challenge</span>
                       </div>
+                      <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-lg">Active Challenge</span>
+                  </div>
 
                       {/* Progress Bar */}
                       {progress > 0 && (
                         <div className="mb-4">
                           <ProgressBar progress={progress} colorClass="bg-blue-500" />
                           <p className="text-xs text-slate-400 mt-1">{Math.round(progress)}% complete</p>
-                        </div>
+                      </div>
                       )}
 
                       {/* Challenge Details */}
@@ -669,22 +669,22 @@ export const PatientGoals = () => {
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-slate-500 dark:text-slate-400">Target:</span>
                           <span className="font-bold text-primary">{goal.target}</span>
-                        </div>
                       </div>
+                  </div>
 
                       {/* Reward Box */}
                       <div className={`${categoryColor.bg} border ${categoryColor.border} rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4`}>
-                        <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3">
                           <div className="size-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
-                            <Icon name="stars" className="text-sm" />
+                              <Icon name="stars" className="text-sm" />
                           </div>
                           <div>
-                            <p className="text-xs md:text-sm font-bold text-slate-800 dark:text-white">
+                              <p className="text-xs md:text-sm font-bold text-slate-800 dark:text-white">
                               Reward: <span className="text-primary">{goal.reward.toLocaleString()} RDM</span>
-                            </p>
+                              </p>
                             <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{goal.description}</p>
                           </div>
-                        </div>
+                      </div>
                         <button 
                           onClick={() => handleLogProgressClick(goal)}
                           className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-lg text-xs font-bold border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors whitespace-nowrap w-full sm:w-auto"
@@ -692,9 +692,9 @@ export const PatientGoals = () => {
                           aria-label="Log your progress"
                         >
                           Log Progress
-                        </button>
-                      </div>
-                    </div>
+                      </button>
+                  </div>
+               </div>
                   );
                 })}
             </div>
@@ -710,7 +710,7 @@ export const PatientGoals = () => {
       return (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner />
-        </div>
+                      </div>
       );
     }
 
@@ -869,10 +869,10 @@ export const PatientGoals = () => {
     <div className="animate-[fadeIn_0.5s_ease-out] w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 pb-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
+                      <div>
             <h2 className="text-xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">My Health Targets</h2>
             <p className="text-slate-500 dark:text-slate-400 text-xs md:text-base mt-1">Hit targets to unlock rewards entrusted by your Care Team.</p>
-        </div>
+                      </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setShowModal(true)}
@@ -889,8 +889,8 @@ export const PatientGoals = () => {
             <Icon name="notifications" className="text-xl" />
             <span className="absolute top-2.5 right-2.5 size-2 bg-rose-500 rounded-full border-2 border-white dark:border-surface-dark animate-pulse"></span>
           </button>
-        </div>
-      </div>
+                  </div>
+               </div>
 
       {/* Tabs */}
       <div className="flex gap-6 md:gap-8 border-b border-slate-200 dark:border-slate-800 overflow-x-auto no-scrollbar">
@@ -925,7 +925,7 @@ export const PatientGoals = () => {
           <Icon name="lock" className="text-sm mb-0.5" />
           Pending Wealth ({pendingRewards.length} Items)
         </button>
-      </div>
+            </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
         {/* Main Content Area */}
@@ -937,7 +937,7 @@ export const PatientGoals = () => {
 
         {/* Sidebar Area - Only show for active tab */}
         {activeTab === 'active' && (
-          <div className="lg:col-span-4 flex flex-col gap-6">
+        <div className="lg:col-span-4 flex flex-col gap-6">
            {/* Performance Card (The Multiplier Engine) */}
            <div className="bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm flex flex-col relative border-2 border-blue-50 dark:border-blue-900/20">
               <div className="bg-slate-900 p-4 flex items-center justify-center gap-2 shrink-0">
@@ -1005,7 +1005,7 @@ export const PatientGoals = () => {
                   </p>
               </div>
            </div>
-          </div>
+        </div>
         )}
       </div>
 
@@ -1081,10 +1081,10 @@ export const PatientGoals = () => {
                     
                     <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700 space-y-4">
                         {selectedCategory === 'weight' && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
                                     <label htmlFor="current-weight" className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">CURRENT WEIGHT</label>
-                                    <div className="relative">
+                                <div className="relative">
                                         <input 
                                             id="current-weight"
                                             type="text" 
@@ -1095,12 +1095,12 @@ export const PatientGoals = () => {
                                             placeholder="80"
                                             title="Enter your current weight in kilograms"
                                         />
-                                        <span className="absolute right-3 top-2.5 text-slate-500 font-medium text-xs">kg</span>
-                                    </div>
+                                    <span className="absolute right-3 top-2.5 text-slate-500 font-medium text-xs">kg</span>
                                 </div>
-                                <div>
+                            </div>
+                            <div>
                                     <label htmlFor="target-weight" className="text-[10px] font-bold text-slate-900 dark:text-white uppercase mb-1 block">TARGET WEIGHT</label>
-                                    <div className="relative">
+                                <div className="relative">
                                         <input 
                                             id="target-weight"
                                             type="text" 
@@ -1111,10 +1111,10 @@ export const PatientGoals = () => {
                                             placeholder="75"
                                             title="Enter your target weight in kilograms"
                                         />
-                                        <span className="absolute right-3 top-2.5 text-slate-500 font-medium text-xs">kg</span>
-                                    </div>
+                                    <span className="absolute right-3 top-2.5 text-slate-500 font-medium text-xs">kg</span>
                                 </div>
                             </div>
+                        </div>
                         )}
 
                         {selectedCategory === 'activity' && (
@@ -1243,7 +1243,7 @@ export const PatientGoals = () => {
                                 max="100" 
                                 value={difficulty} 
                                 onChange={(e) => setDifficulty(parseInt(e.target.value))}
-                                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+                                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-cyan-400" 
                                 aria-label="Challenge difficulty level"
                                 title="Adjust challenge difficulty level"
                             />
@@ -1255,8 +1255,8 @@ export const PatientGoals = () => {
                 <section>
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                            <span className="size-5 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-[10px] font-bold">3</span>
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">THE REWARD CONTRACT</h3>
+                        <span className="size-5 rounded-full bg-cyan-100 text-cyan-700 flex items-center justify-center text-[10px] font-bold">3</span>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">THE REWARD CONTRACT</h3>
                         </div>
                         {!isEditingReward && (
                             <button
@@ -1274,9 +1274,9 @@ export const PatientGoals = () => {
                     <div className="relative border-2 border-dashed border-cyan-300 dark:border-cyan-700 bg-cyan-50/50 dark:bg-cyan-900/10 rounded-xl p-6 text-center overflow-hidden">
                         {isEditingReward ? (
                             <div className="space-y-4">
-                                <p className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-3">UPON VERIFIED COMPLETION, YOU WILL EARN:</p>
-                                <div className="flex items-center justify-center gap-2">
-                                    <span className="text-4xl">💰</span>
+                        <p className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-widest mb-3">UPON VERIFIED COMPLETION, YOU WILL EARN:</p>
+                        <div className="flex items-center justify-center gap-2">
+                            <span className="text-4xl">💰</span>
                                     <div className="relative">
                                         <input
                                             type="number"
@@ -1289,7 +1289,7 @@ export const PatientGoals = () => {
                                             aria-label="Reward amount in RDM"
                                         />
                                         <span className="absolute right-0 top-0 text-lg font-bold text-slate-400 ml-2">RDM</span>
-                                    </div>
+                        </div>
                                 </div>
                                 <div className="flex items-center justify-center gap-2 mt-4">
                                     <button
@@ -1756,7 +1756,7 @@ export const PatientGoals = () => {
               >
                 {submittingBP ? 'Submitting...' : 'Submit Reading'} 
                 <Icon name="arrow_forward" />
-              </button>
+                </button>
             </div>
           </div>
         </div>
