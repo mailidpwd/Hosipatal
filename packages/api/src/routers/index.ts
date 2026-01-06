@@ -15,111 +15,9 @@ const registerSchema = z.object({
   role: z.enum(['PATIENT', 'STAFF', 'ADMIN']),
 });
 
-const userSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-  role: z.enum(['PATIENT', 'STAFF', 'ADMIN']),
-  avatar: z.string().optional(),
-});
-
-// Health schemas
-const vitalsSchema = z.object({
-  heartRate: z.number(),
-  bloodPressure: z.string(),
-  weight: z.string(),
-  temperature: z.number().optional(),
-  oxygenSaturation: z.number().optional(),
-  timestamp: z.string().or(z.date()),
-});
-
-const healthMetricsSchema = z.object({
-  steps: z.number(),
-  stepsTarget: z.number(),
-  water: z.number(),
-  waterTarget: z.number(),
-  calories: z.number().optional(),
-  activeMinutes: z.number().optional(),
-  streak: z.number(),
-});
-
-// Appointment schema
-const appointmentSchema = z.object({
-  id: z.string(),
-  doctorName: z.string(),
-  specialty: z.string(),
-  time: z.string(),
-  date: z.string(),
-  isCompleted: z.boolean(),
-  type: z.enum(['upcoming', 'past']),
-});
-
-// Wallet schemas
-const walletTransactionSchema = z.object({
-  id: z.string(),
-  desc: z.string(),
-  amount: z.number(),
-  date: z.string(),
-  type: z.enum(['earned', 'spent', 'reward']),
-});
-
-const walletBalanceSchema = z.object({
-  balance: z.number(),
-  weeklyEarnings: z.number(),
-  totalEarnings: z.number(),
-  history: z.array(walletTransactionSchema),
-});
-
-// Medication schema
-const medicationSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  strength: z.string(),
-  frequency: z.string(),
-  route: z.string(),
-  duration: z.string(),
-  instructions: z.string(),
-  alert: z.string().optional(),
-  isVerified: z.boolean(),
-  isAutoAdded: z.boolean(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-});
-
-// Notification schema
-const notificationSchema = z.object({
-  id: z.string(),
-  message: z.string(),
-  type: z.enum(['success', 'info', 'warning', 'error']),
-  timestamp: z.string().or(z.date()),
-});
-
-// Claim schema
-const claimSchema = z.object({
-  id: z.string(),
-  patientId: z.string(),
-  providerId: z.string(),
-  diagnosis: z.object({
-    code: z.string(),
-    desc: z.string(),
-  }),
-  cpt: z.object({
-    code: z.string(),
-    desc: z.string(),
-  }),
-  reimbursement: z.string(),
-  medications: z.array(z.object({
-    name: z.string(),
-    strength: z.string(),
-    frequency: z.string(),
-    route: z.string(),
-    duration: z.string(),
-    instructions: z.string(),
-  })),
-  status: z.enum(['pending', 'approved', 'rejected']),
-  createdAt: z.string().or(z.date()),
-  updatedAt: z.string().or(z.date()),
-});
+// Note: The following schemas are defined for documentation purposes but may be used for type inference
+// userSchema, vitalsSchema, healthMetricsSchema, appointmentSchema, walletTransactionSchema,
+// walletBalanceSchema, medicationSchema, notificationSchema, claimSchema - kept for reference
 
 // In-memory store for goals (temporary until database is implemented)
 // In a real application, this would be stored in a database
@@ -553,27 +451,27 @@ export const appRouter = {
       .handler(async ({ input }) => {
         // Look up user by email
         const user = usersStore.find(u => u.email === input.email);
-        
+
         if (!user) {
           throw new Error('Invalid email or password');
         }
-        
+
         // In production, verify password hash here
         // For now, simple string comparison
         if (user.password !== input.password) {
           throw new Error('Invalid email or password');
         }
-        
+
         // Ensure role is one of the valid enum values
         const validRole = user.role as 'PATIENT' | 'STAFF' | 'ADMIN';
-        
+
         console.log('[Auth API] ✅ User logged in:', {
           id: user.id,
           email: user.email,
           role: validRole,
           roleType: typeof validRole,
         });
-        
+
         return {
           user: {
             id: user.id,
@@ -592,13 +490,13 @@ export const appRouter = {
         if (input.role === 'ADMIN') {
           throw new Error('Admin accounts cannot be self-registered. Please contact system administrator.');
         }
-        
+
         // Check if user already exists
         const existingUser = usersStore.find(u => u.email === input.email);
         if (existingUser) {
           throw new Error('User with this email already exists');
         }
-        
+
         // Create new user
         const newUser = {
           id: `user-${Date.now()}-${Math.random().toString(36).substring(7)}`,
@@ -608,14 +506,14 @@ export const appRouter = {
           role: input.role,
           createdAt: new Date().toISOString(),
         };
-        
+
         usersStore.push(newUser);
         console.log('[Auth API] ✅ Registered new user:', {
           id: newUser.id,
           email: newUser.email,
           role: newUser.role,
         });
-        
+
         return {
           user: {
             id: newUser.id,
@@ -655,7 +553,7 @@ export const appRouter = {
   user: {
     getProfile: publicProcedure
       .input(z.object({ userId: z.string().optional() }).optional())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real profile fetch
         return null;
       }),
@@ -669,7 +567,7 @@ export const appRouter = {
 
     uploadAvatar: publicProcedure
       .input(z.any())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real avatar upload
         return { avatarUrl: 'https://example.com/avatar.jpg' };
       }),
@@ -679,12 +577,12 @@ export const appRouter = {
   health: {
     getVitals: publicProcedure
       .input(z.object({ userId: z.string().optional() }).optional())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // Return the latest vital reading, or default
-        const latest = vitalsStore.length > 0 
+        const latest = vitalsStore.length > 0
           ? vitalsStore[vitalsStore.length - 1]
           : null;
-        
+
         if (latest) {
           return {
             heartRate: latest.heartRate || 72,
@@ -693,7 +591,7 @@ export const appRouter = {
             timestamp: new Date(latest.timestamp),
           };
         }
-        
+
         return {
           heartRate: 72,
           bloodPressure: '145/90', // Default to current reading
@@ -717,7 +615,7 @@ export const appRouter = {
 
     getMetrics: publicProcedure
       .input(z.object({ userId: z.string().optional() }).optional())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real metrics fetch
         return {
           steps: 0,
@@ -762,7 +660,7 @@ export const appRouter = {
         type: z.enum(['upcoming', 'past']).optional(),
         userId: z.string().optional(),
       }).optional())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real appointments fetch
         return [];
       }),
@@ -783,7 +681,7 @@ export const appRouter = {
 
     delete: publicProcedure
       .input(z.object({ id: z.string() }))
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real appointment deletion
         return { success: true };
       }),
@@ -793,7 +691,7 @@ export const appRouter = {
   wallet: {
     getBalance: publicProcedure
       .input(z.object({ userId: z.string().optional() }).optional())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real wallet balance fetch
         return {
           balance: 0,
@@ -809,7 +707,7 @@ export const appRouter = {
         offset: z.number().optional(),
         type: z.enum(['earned', 'spent', 'reward']).optional(),
       }).optional())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real transaction history fetch
         return [];
       }),
@@ -886,7 +784,7 @@ export const appRouter = {
 
     getPendingRewards: publicProcedure
       .input(z.object({ userId: z.string().optional() }).optional())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // Return pending rewards for active goals
         const activeGoals = goalsStore.filter(goal => goal.status === 'active');
         return activeGoals.map(goal => ({
@@ -959,7 +857,7 @@ export const appRouter = {
   medications: {
     list: publicProcedure
       .input(z.object({ userId: z.string().optional() }).optional())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real medications fetch
         return [];
       }),
@@ -980,14 +878,14 @@ export const appRouter = {
 
     delete: publicProcedure
       .input(z.object({ id: z.string() }))
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real medication deletion
         return { success: true };
       }),
 
     markTaken: publicProcedure
       .input(z.object({ id: z.string(), timestamp: z.date().optional() }))
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real medication tracking
         return { success: true };
       }),
@@ -1000,14 +898,14 @@ export const appRouter = {
         unreadOnly: z.boolean().optional(),
         limit: z.number().optional(),
       }).optional())
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real notifications fetch
         return [];
       }),
 
     markRead: publicProcedure
       .input(z.object({ id: z.string() }))
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real notification mark as read
         return { success: true };
       }),
@@ -1019,7 +917,7 @@ export const appRouter = {
 
     delete: publicProcedure
       .input(z.object({ id: z.string() }))
-      .handler(async ({ input }) => {
+      .handler(async ({ input: _input }) => {
         // TODO: Implement real notification deletion
         return { success: true };
       }),
@@ -1075,26 +973,26 @@ export const appRouter = {
       }).optional())
       .handler(async ({ input }) => {
         let filtered = [...claimsStore];
-        
+
         if (input?.patientId) {
           filtered = filtered.filter(c => c.patientId === input.patientId);
         }
-        
+
         if (input?.providerId) {
           filtered = filtered.filter(c => c.providerId === input.providerId);
         }
-        
+
         if (input?.status) {
           filtered = filtered.filter(c => c.status === input.status);
         }
-        
+
         // Sort by creation date (newest first)
         const sorted = filtered.sort((a, b) => {
           const dateA = new Date(a.createdAt).getTime();
           const dateB = new Date(b.createdAt).getTime();
           return dateB - dateA;
         });
-        
+
         return sorted.map(claim => ({
           ...claim,
           createdAt: new Date(claim.createdAt),
@@ -1150,17 +1048,17 @@ export const appRouter = {
       .input(z.object({ providerId: z.string().optional() }).optional())
       .handler(async ({ input }) => {
         // Filter by providerId if provided
-        const providerPatients = input?.providerId 
+        const providerPatients = input?.providerId
           ? patientsStore.filter(p => p.providerId === input.providerId)
           : patientsStore;
-        
+
         const providerAlerts = input?.providerId
           ? alertsStore.filter(a => {
-              const patient = patientsStore.find(p => p.id === a.patientId);
-              return patient?.providerId === input.providerId;
-            })
+            const patient = patientsStore.find(p => p.id === a.patientId);
+            return patient?.providerId === input.providerId;
+          })
           : alertsStore;
-        
+
         const criticalCount = providerAlerts.filter(a => a.severity === 'high').length;
         const totalPatients = providerPatients.length;
         const recentTips = tipsStore.slice(0, 3);
@@ -1200,13 +1098,13 @@ export const appRouter = {
       }).optional())
       .handler(async ({ input }) => {
         // Filter by providerId first if provided
-        let filtered = input?.providerId 
+        let filtered = input?.providerId
           ? patientsStore.filter(p => p.providerId === input.providerId)
           : [...patientsStore];
-        
+
         if (input?.search) {
           const searchLower = input.search.toLowerCase();
-          filtered = filtered.filter(p => 
+          filtered = filtered.filter(p =>
             p.name.toLowerCase().includes(searchLower) ||
             p.patientId.toLowerCase().includes(searchLower) ||
             p.diagnosis.toLowerCase().includes(searchLower)
@@ -1230,7 +1128,7 @@ export const appRouter = {
       }),
 
     getPatientProfile: publicProcedure
-      .input(z.object({ 
+      .input(z.object({
         patientId: z.string(),
         providerId: z.string().optional(), // Optional: verify provider has access
       }))
@@ -1239,7 +1137,7 @@ export const appRouter = {
         if (!patient) {
           return null;
         }
-        
+
         // If providerId is provided, verify access
         if (input.providerId && patient.providerId !== input.providerId) {
           throw new Error('Access denied: Patient not assigned to this provider');
@@ -1247,13 +1145,13 @@ export const appRouter = {
 
         // Get vitals for this patient
         const patientVitals = vitalsStore.filter(v => v.patientId === input.patientId);
-        const latestVitals = patientVitals.length > 0 
+        const latestVitals = patientVitals.length > 0
           ? patientVitals[patientVitals.length - 1]
           : {
-              bloodPressure: '120/80',
-              heartRate: 72,
-              weight: '78 kg',
-            };
+            bloodPressure: '120/80',
+            heartRate: 72,
+            weight: '78 kg',
+          };
 
         return {
           ...patient,
@@ -1279,10 +1177,9 @@ export const appRouter = {
             return patient?.providerId === input.providerId;
           });
         }
-        
+
         const activePledges = providerPledges.filter(p => p.status === 'active' || p.status === 'at-risk');
-        const totalPledged = activePledges.reduce((sum, p) => sum + p.amount, 0);
-        
+
         // Filter tips by providerId if provided
         let providerTips = tipsStore;
         if (input?.providerId) {
@@ -1309,14 +1206,14 @@ export const appRouter = {
       }),
 
     getSchedule: publicProcedure
-      .input(z.object({ 
+      .input(z.object({
         date: z.string().optional(),
         providerId: z.string().optional(),
       }).optional())
       .handler(async ({ input }) => {
         const targetDate = input?.date || new Date().toISOString().split('T')[0];
         let schedule = scheduleStore.filter(s => s.date === targetDate);
-        
+
         // Filter by providerId if provided
         if (input?.providerId) {
           schedule = schedule.filter(s => {
@@ -1325,7 +1222,7 @@ export const appRouter = {
             return patient?.providerId === input.providerId;
           });
         }
-        
+
         return schedule.sort((a, b) => a.time.localeCompare(b.time));
       }),
 
@@ -1333,7 +1230,7 @@ export const appRouter = {
       .input(z.object({ providerId: z.string().optional() }).optional())
       .handler(async ({ input }) => {
         let alerts = [...alertsStore];
-        
+
         // Filter by providerId if provided
         if (input?.providerId) {
           alerts = alerts.filter(alert => {
@@ -1341,27 +1238,27 @@ export const appRouter = {
             return patient?.providerId === input.providerId;
           });
         }
-        
-        return alerts.sort((a, b) => 
+
+        return alerts.sort((a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
       }),
 
     getRecentWishes: publicProcedure
-      .input(z.object({ 
+      .input(z.object({
         limit: z.number().optional(),
         providerId: z.string().optional(),
       }).optional())
       .handler(async ({ input }) => {
         const limit = input?.limit || 10;
         let tips = [...tipsStore];
-        
+
         console.log('[Provider API] getRecentWishes called:', {
           providerId: input?.providerId,
           limit,
           totalTipsInStore: tipsStore.length,
         });
-        
+
         // Filter by providerId if provided
         if (input?.providerId) {
           tips = tips.filter(tip => {
@@ -1370,19 +1267,19 @@ export const appRouter = {
               const pId = p.id?.toString() || '';
               const pPatientId = p.patientId?.toString() || '';
               const tipPatientId = tip.patientId?.toString() || '';
-              
+
               return pId === tipPatientId ||
-                     pPatientId === tipPatientId ||
-                     pId === `#${tipPatientId}` ||
-                     pPatientId === `#${tipPatientId}` ||
-                     `#${pId}` === tipPatientId ||
-                     `#${pPatientId}` === tipPatientId ||
-                     pId === tipPatientId.replace('#', '') ||
-                     pPatientId === tipPatientId.replace('#', '') ||
-                     pId.replace('#', '') === tipPatientId.replace('#', '') ||
-                     pPatientId.replace('#', '') === tipPatientId.replace('#', '');
+                pPatientId === tipPatientId ||
+                pId === `#${tipPatientId}` ||
+                pPatientId === `#${tipPatientId}` ||
+                `#${pId}` === tipPatientId ||
+                `#${pPatientId}` === tipPatientId ||
+                pId === tipPatientId.replace('#', '') ||
+                pPatientId === tipPatientId.replace('#', '') ||
+                pId.replace('#', '') === tipPatientId.replace('#', '') ||
+                pPatientId.replace('#', '') === tipPatientId.replace('#', '');
             });
-            
+
             const matches = patient?.providerId === input.providerId;
             if (matches) {
               console.log('[Provider API] getRecentWishes: ✅ Tip matched for provider:', {
@@ -1396,9 +1293,9 @@ export const appRouter = {
             return matches;
           });
         }
-        
+
         console.log('[Provider API] getRecentWishes: Returning', tips.length, 'tips for provider', input?.providerId);
-        
+
         return tips
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
           .slice(0, limit);
@@ -1425,19 +1322,19 @@ export const appRouter = {
           const pId = p.id?.toString() || '';
           const pPatientId = p.patientId?.toString() || '';
           const inputId = input.patientId?.toString() || '';
-          
+
           return pId === inputId ||
-                 pPatientId === inputId ||
-                 pId === `#${inputId}` ||
-                 pPatientId === `#${inputId}` ||
-                 `#${pId}` === inputId ||
-                 `#${pPatientId}` === inputId ||
-                 pId === inputId.replace('#', '') ||
-                 pPatientId === inputId.replace('#', '') ||
-                 pId.replace('#', '') === inputId.replace('#', '') ||
-                 pPatientId.replace('#', '') === inputId.replace('#', '');
+            pPatientId === inputId ||
+            pId === `#${inputId}` ||
+            pPatientId === `#${inputId}` ||
+            `#${pId}` === inputId ||
+            `#${pPatientId}` === inputId ||
+            pId === inputId.replace('#', '') ||
+            pPatientId === inputId.replace('#', '') ||
+            pId.replace('#', '') === inputId.replace('#', '') ||
+            pPatientId.replace('#', '') === inputId.replace('#', '');
         });
-        
+
         console.log('[Provider API] Patient lookup result:', {
           found: !!patient,
           patientId: patient?.id,
@@ -1445,7 +1342,7 @@ export const appRouter = {
           patientPatientId: patient?.patientId,
           providerId: patient?.providerId,
         });
-        
+
         if (!patient) {
           console.error('[Provider API] ❌ Patient not found for ID:', input.patientId);
           console.error('[Provider API] Available patients:', patientsStore.map(p => ({ id: p.id, patientId: p.patientId, name: p.name })));
@@ -1484,7 +1381,7 @@ export const appRouter = {
       }),
 
     getMySentTips: publicProcedure
-      .input(z.object({ 
+      .input(z.object({
         patientId: z.string().optional(),
       }).optional())
       .handler(async ({ input }) => {
@@ -1497,10 +1394,10 @@ export const appRouter = {
           const tipPatientId = tip.patientId;
           const inputPatientId = input.patientId;
           return tipPatientId === inputPatientId ||
-                 tipPatientId === `#${inputPatientId}` ||
-                 `#${tipPatientId}` === inputPatientId ||
-                 tipPatientId === inputPatientId?.replace('#', '') ||
-                 tipPatientId?.replace('#', '') === inputPatientId;
+            tipPatientId === `#${inputPatientId}` ||
+            `#${tipPatientId}` === inputPatientId ||
+            tipPatientId === inputPatientId?.replace('#', '') ||
+            tipPatientId?.replace('#', '') === inputPatientId;
         });
 
         return sentTips
@@ -1546,17 +1443,17 @@ export const appRouter = {
           const pId = p.id?.toString() || '';
           const pPatientId = p.patientId?.toString() || '';
           const inputId = input.patientId?.toString() || '';
-          
+
           return pId === inputId ||
-                 pPatientId === inputId ||
-                 pId === `#${inputId}` ||
-                 pPatientId === `#${inputId}` ||
-                 `#${pId}` === inputId ||
-                 `#${pPatientId}` === inputId ||
-                 pId === inputId.replace('#', '') ||
-                 pPatientId === inputId.replace('#', '') ||
-                 pId.replace('#', '') === inputId.replace('#', '') ||
-                 pPatientId.replace('#', '') === inputId.replace('#', '');
+            pPatientId === inputId ||
+            pId === `#${inputId}` ||
+            pPatientId === `#${inputId}` ||
+            `#${pId}` === inputId ||
+            `#${pPatientId}` === inputId ||
+            pId === inputId.replace('#', '') ||
+            pPatientId === inputId.replace('#', '') ||
+            pId.replace('#', '') === inputId.replace('#', '') ||
+            pPatientId.replace('#', '') === inputId.replace('#', '');
         });
 
         console.log('[Provider API] createPledge: Patient lookup result:', {
@@ -1587,13 +1484,13 @@ export const appRouter = {
         ].filter(Boolean);
 
         pledgesStore.forEach(p => {
-          const shouldReplace = patientIdVariants.some(variant => 
-            p.patientId === variant || 
+          const shouldReplace = patientIdVariants.some(variant =>
+            p.patientId === variant ||
             p.patientId === `#${variant}` ||
             p.patientId === variant?.replace('#', '') ||
             `#${p.patientId}` === variant
           ) && p.status === 'active' && !p.accepted;
-          
+
           if (shouldReplace) {
             p.status = 'replaced';
             p.replacedAt = new Date().toISOString();
@@ -1605,7 +1502,7 @@ export const appRouter = {
         // This ensures pledges match when patient logs in with their user.id
         // Store BOTH formats to ensure matching works regardless of how patient logs in
         const normalizedPatientId = patient.id || input.patientId;
-        
+
         console.log('[Provider API] createPledge: Creating pledge for patient:', {
           inputPatientId: input.patientId,
           patientId: patient.id,
@@ -1787,7 +1684,7 @@ export const appRouter = {
       .handler(async ({ input }) => {
         // Clean patient ID for internal use
         const cleanId = input.patientId.replace(/[^a-zA-Z0-9]/g, '');
-        
+
         // Get staff member to derive adminId
         let adminId: string | undefined;
         if (input.providerId) {
@@ -1796,12 +1693,12 @@ export const appRouter = {
             adminId = staff.adminId;
           }
         }
-        
+
         // If no adminId found, throw error (patient must be created by staff with admin)
         if (!adminId) {
           throw new Error('Patient must be created by a staff member assigned to an admin');
         }
-        
+
         const newPatient = {
           id: cleanId,
           name: `${input.firstName} ${input.lastName}`,
@@ -1827,7 +1724,7 @@ export const appRouter = {
           createdBy: input.providerId || '',
           createdAt: new Date().toISOString(),
         };
-        
+
         patientsStore.push(newPatient);
         console.log('[Provider API] ✅ Created new patient:', {
           id: newPatient.id,
@@ -1837,10 +1734,10 @@ export const appRouter = {
           adminId: adminId,
           verificationStatus: 'pending',
         });
-        
+
         // TODO: Send SMS with credentials to patient's contact number
         // TODO: Create user account in auth system
-        
+
         return {
           ...newPatient,
           password: undefined, // Don't return password
@@ -1861,7 +1758,7 @@ export const appRouter = {
           const firstName = nameParts[0]?.toLowerCase() || 'patient';
           const lastName = nameParts.slice(1).join('').toLowerCase() || 'user';
           const timestamp = Date.now().toString().slice(-4);
-          
+
           patient.email = `${firstName}.${lastName}.${timestamp}@rdmhealth.patient`;
           const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
           patient.password = Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
@@ -1946,13 +1843,13 @@ export const appRouter = {
         const pledges = pledgesStore.filter(p => {
           const pId = p.patientId?.toString() || '';
           const inputId = input.patientId?.toString() || '';
-          return pId === inputId || 
-                 pId === `#${inputId}` ||
-                 pId === inputId.replace('#', '') ||
-                 `#${pId}` === inputId;
+          return pId === inputId ||
+            pId === `#${inputId}` ||
+            pId === inputId.replace('#', '') ||
+            `#${pId}` === inputId;
         });
-        
-        return pledges.sort((a, b) => 
+
+        return pledges.sort((a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
       }),
@@ -1974,7 +1871,7 @@ export const appRouter = {
         pledge.acceptedAt = new Date().toISOString();
         pledge.status = 'active';
         pledge.startDate = new Date().toISOString();
-        
+
         // Calculate end date
         const endDate = new Date(pledge.startDate);
         endDate.setDate(endDate.getDate() + pledge.totalDays);
@@ -1982,9 +1879,9 @@ export const appRouter = {
 
         // Deactivate any other active pledges for this patient
         pledgesStore.forEach(p => {
-          if (p.id !== pledge.id && 
-              (p.patientId === pledge.patientId || p.patientId === `#${pledge.patientId}` || p.patientId === pledge.patientId.replace('#', '')) && 
-              p.status === 'active' && p.accepted) {
+          if (p.id !== pledge.id &&
+            (p.patientId === pledge.patientId || p.patientId === `#${pledge.patientId}` || p.patientId === pledge.patientId.replace('#', '')) &&
+            p.status === 'active' && p.accepted) {
             p.status = 'replaced';
             p.replacedAt = new Date().toISOString();
           }
@@ -2007,23 +1904,24 @@ export const appRouter = {
         console.log('Input userId:', input.userId);
         console.log('Input userId type:', typeof input.userId);
         console.log('Total pledges in store:', pledgesStore.length);
-        console.log('All pledges in store:', JSON.stringify(pledgesStore.map(p => ({ 
-          pledgeId: p.id, 
+        console.log('All pledges in store:', JSON.stringify(pledgesStore.map(p => ({
+          pledgeId: p.id,
           patientId: p.patientId,
           patientIdType: typeof p.patientId,
           patientName: p.patientName,
-          status: p.status, 
-          accepted: p.accepted 
+          status: p.status,
+          accepted: p.accepted
         })), null, 2));
 
         // Try to find patient by userId in patientsStore first
-        const patient = patientsStore.find(p => 
-          p.id === input.userId || 
-          p.patientId === input.userId ||
-          p.id === `#${input.userId}` ||
-          p.patientId === `#${input.userId}` ||
-          p.id === input.userId.replace('#', '') ||
-          p.patientId === input.userId.replace('#', '')
+        const userId = input.userId || '';
+        const patient = patientsStore.find(p =>
+          p.id === userId ||
+          p.patientId === userId ||
+          p.id === `#${userId}` ||
+          p.patientId === `#${userId}` ||
+          p.id === userId.replace('#', '') ||
+          p.patientId === userId.replace('#', '')
         );
 
         console.log('[Provider API] getMyPledges: Patient found in patientsStore:', patient ? {
@@ -2034,18 +1932,18 @@ export const appRouter = {
         } : 'NOT FOUND');
 
         // Use patient's ID or patientId for matching - prioritize patient.id (matches user.id)
-        const searchIds = patient 
+        const searchIds = patient
           ? [
-              patient.id, // This is the key - patient.id matches user.id
-              patient.patientId,
-              `#${patient.id}`,
-              `#${patient.patientId}`,
-              patient.id.replace('#', ''),
-              patient.patientId?.replace('#', ''),
-              input.userId, // Also try input directly
-              `#${input.userId}`,
-              input.userId.replace('#', '')
-            ].filter(Boolean)
+            patient.id, // This is the key - patient.id matches user.id
+            patient.patientId,
+            `#${patient.id}`,
+            `#${patient.patientId}`,
+            patient.id.replace('#', ''),
+            patient.patientId?.replace('#', ''),
+            input.userId, // Also try input directly
+            `#${input.userId}`,
+            input.userId.replace('#', '')
+          ].filter(Boolean)
           : [input.userId, `#${input.userId}`, input.userId.replace('#', '')];
 
         console.log('[Provider API] getMyPledges: Search IDs to match:', searchIds);
@@ -2055,18 +1953,18 @@ export const appRouter = {
           const match = searchIds.some(searchId => {
             const searchIdStr = searchId?.toString() || '';
             // More comprehensive matching
-            const isMatch = pId === searchIdStr || 
-                         pId === `#${searchIdStr}` ||
-                         `#${pId}` === searchIdStr ||
-                         pId === searchIdStr.replace('#', '') ||
-                         pId.replace('#', '') === searchIdStr ||
-                         pId.replace('#', '') === searchIdStr.replace('#', '') ||
-                         `#${pId.replace('#', '')}` === searchIdStr ||
-                         pId === `#${searchIdStr.replace('#', '')}`;
+            const isMatch = pId === searchIdStr ||
+              pId === `#${searchIdStr}` ||
+              `#${pId}` === searchIdStr ||
+              pId === searchIdStr.replace('#', '') ||
+              pId.replace('#', '') === searchIdStr ||
+              pId.replace('#', '') === searchIdStr.replace('#', '') ||
+              `#${pId.replace('#', '')}` === searchIdStr ||
+              pId === `#${searchIdStr.replace('#', '')}`;
             if (isMatch) {
-              console.log('[Provider API] getMyPledges: ✅ MATCH FOUND!', { 
-                pledgeId: p.id, 
-                pledgePatientId: pId, 
+              console.log('[Provider API] getMyPledges: ✅ MATCH FOUND!', {
+                pledgeId: p.id,
+                pledgePatientId: pId,
                 searchId: searchIdStr,
                 pledgeStatus: p.status,
                 pledgeAccepted: p.accepted
@@ -2076,7 +1974,7 @@ export const appRouter = {
           });
           return match;
         });
-        
+
         console.log('[Provider API] getMyPledges: Filtered pledges (before status filter):', pledges.length);
         console.log('[Provider API] getMyPledges: Filtered pledges details:', pledges.map(p => ({
           id: p.id,
@@ -2084,7 +1982,7 @@ export const appRouter = {
           status: p.status,
           accepted: p.accepted
         })));
-        
+
         // Return only pending and active (accepted) pledges
         // IMPORTANT: Include ALL pending pledges regardless of accepted status
         // Pending pledges are created by providers and need to be visible to patients
@@ -2099,7 +1997,7 @@ export const appRouter = {
           }
           return false;
         });
-        
+
         console.log('[Provider API] getMyPledges: ✅ Active/pending pledges:', activePledges.length);
         console.log('[Provider API] getMyPledges: Filtered pledges count:', pledges.length);
         console.log('[Provider API] getMyPledges: All matching pledges (before status filter):', pledges.map(p => ({
@@ -2110,7 +2008,7 @@ export const appRouter = {
           accepted: p.accepted,
           goal: p.goal
         })));
-        
+
         if (activePledges.length > 0) {
           console.log('[Provider API] getMyPledges: ✅ Active/pending pledges details:', activePledges.map(p => ({
             id: p.id,
@@ -2136,9 +2034,9 @@ export const appRouter = {
           })));
         }
         console.log('========================================');
-        
+
         // Return active/pending pledges sorted by timestamp (newest first)
-        return activePledges.sort((a, b) => 
+        return activePledges.sort((a, b) =>
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
         );
       }),
@@ -2151,20 +2049,19 @@ export const appRouter = {
       .handler(async ({ input }) => {
         // Get all staff under this admin
         const staffMembers = usersStore.filter(u => u.role === 'STAFF' && u.adminId === input.adminId);
-        const staffIds = staffMembers.map(s => s.id);
-        
+
         // Get all patients under this admin (through staff)
         const adminPatients = patientsStore.filter(p => p.adminId === input.adminId);
-        
+
         // Get pending verifications
         const pendingVerifications = adminPatients.filter(p => p.verificationStatus === 'pending');
-        
+
         // Get recent alerts for admin's patients
         const recentAlerts = alertsStore.filter(a => {
           const patient = adminPatients.find(p => p.id === a.patientId);
           return patient !== undefined;
         }).slice(0, 5);
-        
+
         return {
           totalStaff: staffMembers.length,
           totalPatients: adminPatients.length,
@@ -2184,16 +2081,16 @@ export const appRouter = {
       .handler(async ({ input }) => {
         // Filter staff by adminId
         let staff = usersStore.filter(u => u.role === 'STAFF' && u.adminId === input.adminId);
-        
+
         // Apply search filter
         if (input.search) {
           const searchLower = input.search.toLowerCase();
-          staff = staff.filter(s => 
+          staff = staff.filter(s =>
             s.name.toLowerCase().includes(searchLower) ||
             s.email.toLowerCase().includes(searchLower)
           );
         }
-        
+
         // Get patient counts for each staff
         const staffWithCounts = staff.map(s => {
           const patientCount = patientsStore.filter(p => p.providerId === s.id).length;
@@ -2206,12 +2103,12 @@ export const appRouter = {
             createdAt: s.createdAt,
           };
         });
-        
+
         // Apply pagination
         const offset = input.offset || 0;
         const limit = input.limit || 50;
         const paginated = staffWithCounts.slice(offset, offset + limit);
-        
+
         return {
           staff: paginated,
           total: staffWithCounts.length,
@@ -2233,34 +2130,34 @@ export const appRouter = {
       .handler(async ({ input }) => {
         // Filter patients by adminId
         let patients = patientsStore.filter(p => p.adminId === input.adminId);
-        
+
         // Apply filters
         if (input.search) {
           const searchLower = input.search.toLowerCase();
-          patients = patients.filter(p => 
+          patients = patients.filter(p =>
             p.name.toLowerCase().includes(searchLower) ||
             p.patientId.toLowerCase().includes(searchLower) ||
             p.email?.toLowerCase().includes(searchLower)
           );
         }
-        
+
         if (input.status) {
           patients = patients.filter(p => p.status === input.status);
         }
-        
+
         if (input.verificationStatus) {
           patients = patients.filter(p => p.verificationStatus === input.verificationStatus);
         }
-        
+
         if (input.providerId) {
           patients = patients.filter(p => p.providerId === input.providerId);
         }
-        
+
         // Apply pagination
         const offset = input.offset || 0;
         const limit = input.limit || 50;
         const paginated = patients.slice(offset, offset + limit);
-        
+
         return {
           patients: paginated.map(p => ({
             ...p,
@@ -2279,7 +2176,7 @@ export const appRouter = {
         const pendingPatients = patientsStore.filter(
           p => p.adminId === input.adminId && p.verificationStatus === 'pending'
         );
-        
+
         // Enrich with staff information
         const enriched = pendingPatients.map(patient => {
           const staff = usersStore.find(s => s.id === patient.createdBy);
@@ -2293,8 +2190,8 @@ export const appRouter = {
             password: undefined, // Don't return password
           };
         });
-        
-        return enriched.sort((a, b) => 
+
+        return enriched.sort((a, b) =>
           new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
         );
       }),
@@ -2306,30 +2203,30 @@ export const appRouter = {
         action: z.enum(['approve', 'reject']),
       }))
       .handler(async ({ input }) => {
-        const patient = patientsStore.find(p => 
-          (p.id === input.patientId || p.patientId === input.patientId) && 
+        const patient = patientsStore.find(p =>
+          (p.id === input.patientId || p.patientId === input.patientId) &&
           p.adminId === input.adminId
         );
-        
+
         if (!patient) {
           throw new Error('Patient not found or does not belong to this admin');
         }
-        
+
         if (patient.verificationStatus !== 'pending') {
           throw new Error(`Patient is already ${patient.verificationStatus}`);
         }
-        
+
         // Update verification status
         patient.verificationStatus = input.action === 'approve' ? 'verified' : 'rejected';
         patient.verifiedBy = input.adminId;
         patient.verifiedAt = new Date().toISOString();
-        
+
         console.log('[Admin API] ✅ Patient verification updated:', {
           patientId: patient.patientId,
           action: input.action,
           adminId: input.adminId,
         });
-        
+
         return {
           ...patient,
           password: undefined, // Don't return password
@@ -2349,13 +2246,13 @@ export const appRouter = {
         if (!admin) {
           throw new Error('Admin not found');
         }
-        
+
         // Check if user already exists
         const existingUser = usersStore.find(u => u.email === input.email);
         if (existingUser) {
           throw new Error('User with this email already exists');
         }
-        
+
         // Create staff user
         const newStaff = {
           id: `staff-${Date.now()}-${Math.random().toString(36).substring(7)}`,
@@ -2366,16 +2263,16 @@ export const appRouter = {
           adminId: input.adminId,
           createdAt: new Date().toISOString(),
         };
-        
+
         usersStore.push(newStaff);
-        
+
         console.log('[Admin API] ✅ Created new staff:', {
           id: newStaff.id,
           email: newStaff.email,
           name: newStaff.name,
           adminId: input.adminId,
         });
-        
+
         return {
           id: newStaff.id,
           email: newStaff.email,
@@ -2392,25 +2289,25 @@ export const appRouter = {
         patientId: z.string(),
       }))
       .handler(async ({ input }) => {
-        const patient = patientsStore.find(p => 
-          (p.id === input.patientId || p.patientId === input.patientId) && 
+        const patient = patientsStore.find(p =>
+          (p.id === input.patientId || p.patientId === input.patientId) &&
           p.adminId === input.adminId
         );
-        
+
         if (!patient) {
           throw new Error('Patient not found or does not belong to this admin');
         }
-        
+
         // Get staff who created this patient
         const staff = usersStore.find(s => s.id === patient.createdBy);
-        
+
         // Get vitals for this patient
         const patientVitals = vitalsStore.filter(v => v.patientId === patient.id).slice(-1)[0] || {
           heartRate: 72,
           bloodPressure: '120/80',
           weight: '70 kg',
         };
-        
+
         return {
           ...patient,
           password: undefined, // Don't return password
@@ -2429,249 +2326,247 @@ export const appRouter = {
         console.log('[Admin API] ========== getCommandCenter START ==========');
         console.log('[Admin API] Called with adminId:', input.adminId);
         console.log('[Admin API] AdminId type:', typeof input.adminId);
-        
+
         // Validate adminId first
         if (!input.adminId || typeof input.adminId !== 'string') {
           console.error('[Admin API] ❌ Invalid adminId:', input.adminId);
           throw new Error('Invalid adminId provided');
         }
-        
+
         try {
           // Get all patients under this admin
           const adminPatients = patientsStore.filter(p => p.adminId === input.adminId);
           console.log('[Admin API] Found patients:', adminPatients.length);
-          const adminPatientIds = adminPatients.map(p => p.id);
-          
+
           // Get all staff under this admin
           const adminStaff = usersStore.filter(u => u.role === 'STAFF' && u.adminId === input.adminId);
           console.log('[Admin API] Found staff:', adminStaff.length);
-          const adminStaffIds = adminStaff.map(s => s.id);
-        
-        // Calculate Patient Experience Score (from ratings in tipsStore)
-        const ratings = tipsStore.filter(t => {
-          if (t.type !== 'rating') return false;
-          const patient = adminPatients.find(p => p.id === t.patientId || p.patientId === t.patientId);
-          return patient !== undefined;
-        });
-        const avgRating = ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / ratings.length
-          : 4.8; // Default if no ratings (matching image: 4.8/5.0)
-        const patientExperience = ratings.length > 0
-          ? Math.max(0, Math.min(5.0, (avgRating / 5) * 5.0))
-          : 4.8; // Default value matching image
-        
-        // Calculate Clinical Discipline (average adherence score)
-        const avgAdherence = adminPatients.length > 0
-          ? adminPatients.reduce((sum, p) => sum + (Number(p.adherenceScore) || 0), 0) / adminPatients.length
-          : 96; // Default matching image: 96%
-        const safeAvgAdherence = isNaN(avgAdherence) ? 96 : Math.max(0, Math.min(100, avgAdherence));
-        
-        // Calculate Safety & Hygiene (from alerts - inverse of critical alerts)
-        const criticalAlerts = alertsStore.filter(a => {
-          const patient = adminPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
-          return patient !== undefined && a.severity === 'high';
-        });
-        const safetyScore = criticalAlerts.length > 0
-          ? Math.max(0, Math.min(100, 100 - (criticalAlerts.length * 2)))
-          : 98; // Default matching image: 98%
-        const safeSafetyScore = isNaN(safetyScore) ? 98 : safetyScore;
-        
-        // Calculate Staff Engagement (average tokens earned by staff)
-        const staffEarnings = adminStaff.map(staff => {
-          // Get tips for this staff's patients
-          const staffPatients = adminPatients.filter(p => p.providerId === staff.id);
-          const staffPatientIds = staffPatients.map(p => p.id);
-          const staffTips = tipsStore.filter(t => {
-            const patientId = t.patientId?.toString() || '';
-            return staffPatientIds.some(id => id === patientId || patientId === id.toString());
+
+          // Calculate Patient Experience Score (from ratings in tipsStore)
+          const ratings = tipsStore.filter(t => {
+            if (t.type !== 'rating') return false;
+            const patient = adminPatients.find(p => p.id === t.patientId || p.patientId === t.patientId);
+            return patient !== undefined;
           });
-          const totalTips = staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
-          return totalTips;
-        });
-        const avgStaffEngagement = staffEarnings.length > 0
-          ? staffEarnings.reduce((sum, e) => sum + (Number(e) || 0), 0) / staffEarnings.length
-          : 850;
-        const safeAvgStaffEngagement = isNaN(avgStaffEngagement) ? 850 : Math.max(0, avgStaffEngagement);
-        
-        // Calculate ESG & Charity (from completed pledges converted to USD)
-        const completedPledges = pledgesStore.filter(p => {
-          const patient = adminPatients.find(pat => pat.id === p.patientId || pat.patientId === p.patientId);
-          return patient !== undefined && p.status === 'completed';
-        });
-        const totalDonationsRDM = completedPledges.reduce((sum, p) => sum + (p.amount || 0), 0);
-        const totalDonationsUSD = totalDonationsRDM > 0
-          ? totalDonationsRDM * 0.01 // 100 RDM = $1
-          : 12000; // Default matching image: $12k
-        
-        // Calculate Care Radar metrics
-        const completedGoals = goalsStore.filter(g => {
-          const patient = adminPatients.find(p => p.id === g.userId || p.patientId === g.userId);
-          return patient !== undefined && g.status === 'completed';
-        });
-        const totalGoals = goalsStore.filter(g => {
-          const patient = adminPatients.find(p => p.id === g.userId || p.patientId === g.userId);
-          return patient !== undefined;
-        }).length;
-        const accuracy = adminPatients.length > 0 && totalGoals > 0
-          ? (completedGoals.length / totalGoals) * 100
-          : 92; // Default for high performance
-        const safeAccuracy = isNaN(accuracy) ? 92 : Math.max(0, Math.min(100, accuracy));
-        
-        const empathy = ratings.length > 0 ? (avgRating / 5) * 100 : 96; // Default matching 4.8/5.0 = 96%
-        const safeEmpathy = isNaN(empathy) ? 96 : Math.max(0, Math.min(100, empathy));
-        
-        // Timeliness from schedule (appointments completed on time)
-        const onTimeAppointments = scheduleStore.filter(s => {
-          const patient = adminPatients.find(p => p.id === s.patientId || p.patientId === s.patientId);
-          return patient !== undefined && s.status === 'done';
-        });
-        const timeliness = onTimeAppointments.length > 0 ? 88 : 90; // Default for high performance
-        const safeTimeliness = isNaN(timeliness) ? 90 : Math.max(0, Math.min(100, timeliness));
-        
-        const hygiene = safeSafetyScore;
-        const compliance = safeAvgAdherence;
-        
-        // The Loop Status (system health) - use safe values
-        const systemHealth = (safeAccuracy + safeEmpathy + safeTimeliness + hygiene + compliance) / 5;
-        const safeSystemHealth = isNaN(systemHealth) ? 95 : systemHealth;
-        const loopStatus = safeSystemHealth >= 90 ? 'healthy' : safeSystemHealth >= 75 ? 'moderate' : 'needs_attention';
-        
-        // Role Contribution (token earnings by role)
-        const roleContributions = {
-          doctors: 0,
-          nurses: 0,
-          techs: 0,
-        };
-        adminStaff.forEach(staff => {
-          const staffPatients = adminPatients.filter(p => p.providerId === staff.id);
-          const staffPatientIds = staffPatients.map(p => p.id);
-          const staffTips = tipsStore.filter(t => {
-            const patientId = t.patientId?.toString() || '';
-            return staffPatientIds.some(id => id === patientId || patientId === id.toString());
+          const avgRating = ratings.length > 0
+            ? ratings.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / ratings.length
+            : 4.8; // Default if no ratings (matching image: 4.8/5.0)
+          const patientExperience = ratings.length > 0
+            ? Math.max(0, Math.min(5.0, (avgRating / 5) * 5.0))
+            : 4.8; // Default value matching image
+
+          // Calculate Clinical Discipline (average adherence score)
+          const avgAdherence = adminPatients.length > 0
+            ? adminPatients.reduce((sum, p) => sum + (Number(p.adherenceScore) || 0), 0) / adminPatients.length
+            : 96; // Default matching image: 96%
+          const safeAvgAdherence = isNaN(avgAdherence) ? 96 : Math.max(0, Math.min(100, avgAdherence));
+
+          // Calculate Safety & Hygiene (from alerts - inverse of critical alerts)
+          const criticalAlerts = alertsStore.filter(a => {
+            const patient = adminPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
+            return patient !== undefined && a.severity === 'high';
           });
-          const totalEarnings = staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
-          
-          // Determine role (simplified - in production, use actual role field)
-          if (staff.name.toLowerCase().includes('dr') || staff.name.toLowerCase().includes('doctor')) {
-            roleContributions.doctors += totalEarnings;
-          } else if (staff.name.toLowerCase().includes('nurse')) {
-            roleContributions.nurses += totalEarnings;
-          } else {
-            roleContributions.techs += totalEarnings;
-          }
-        });
-        
-        // Calculate percentages for role contribution
-        const totalRoleEarnings = roleContributions.doctors + roleContributions.nurses + roleContributions.techs;
-        const roleContributionPercentages = {
-          doctors: totalRoleEarnings > 0 ? (roleContributions.doctors / totalRoleEarnings) * 100 : 85,
-          nurses: totalRoleEarnings > 0 ? (roleContributions.nurses / totalRoleEarnings) * 100 : 92,
-          techs: totalRoleEarnings > 0 ? (roleContributions.techs / totalRoleEarnings) * 100 : 78,
-        };
-        
-        // Patient Journey Heatmap - detect bottlenecks
-        const dischargeDelays = scheduleStore.filter(s => {
-          const patient = adminPatients.find(p => p.id === s.patientId || p.patientId === s.patientId);
-          return patient !== undefined && s.type === 'discharge' && s.status !== 'done';
-        });
-        const hasBottleneck = dischargeDelays.length > 0;
-        const bottleneckMessage = hasBottleneck
-          ? `Discharge delays of +45m impacting overall Exp Score.`
-          : null;
-        
-        // Remorse & Learning - top trigger from alerts
-        const alertTypes = alertsStore.filter(a => {
-          const patient = adminPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
-          return patient !== undefined;
-        }).reduce((acc, alert) => {
-          acc[alert.type] = (acc[alert.type] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
-        
-        const topTrigger = Object.entries(alertTypes).sort((a, b) => b[1] - a[1])[0];
-        const remorseData = topTrigger
-          ? {
+          const safetyScore = criticalAlerts.length > 0
+            ? Math.max(0, Math.min(100, 100 - (criticalAlerts.length * 2)))
+            : 98; // Default matching image: 98%
+          const safeSafetyScore = isNaN(safetyScore) ? 98 : safetyScore;
+
+          // Calculate Staff Engagement (average tokens earned by staff)
+          const staffEarnings = adminStaff.map(staff => {
+            // Get tips for this staff's patients
+            const staffPatients = adminPatients.filter(p => p.providerId === staff.id);
+            const staffPatientIds = staffPatients.map(p => p.id);
+            const staffTips = tipsStore.filter(t => {
+              const patientId = t.patientId?.toString() || '';
+              return staffPatientIds.some(id => id === patientId || patientId === id.toString());
+            });
+            const totalTips = staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
+            return totalTips;
+          });
+          const avgStaffEngagement = staffEarnings.length > 0
+            ? staffEarnings.reduce((sum, e) => sum + (Number(e) || 0), 0) / staffEarnings.length
+            : 850;
+          const safeAvgStaffEngagement = isNaN(avgStaffEngagement) ? 850 : Math.max(0, avgStaffEngagement);
+
+          // Calculate ESG & Charity (from completed pledges converted to USD)
+          const completedPledges = pledgesStore.filter(p => {
+            const patient = adminPatients.find(pat => pat.id === p.patientId || pat.patientId === p.patientId);
+            return patient !== undefined && p.status === 'completed';
+          });
+          const totalDonationsRDM = completedPledges.reduce((sum, p) => sum + (p.amount || 0), 0);
+          const totalDonationsUSD = totalDonationsRDM > 0
+            ? totalDonationsRDM * 0.01 // 100 RDM = $1
+            : 12000; // Default matching image: $12k
+
+          // Calculate Care Radar metrics
+          const completedGoals = goalsStore.filter(g => {
+            const patient = adminPatients.find(p => p.id === g.userId || p.patientId === g.userId);
+            return patient !== undefined && g.status === 'completed';
+          });
+          const totalGoals = goalsStore.filter(g => {
+            const patient = adminPatients.find(p => p.id === g.userId || p.patientId === g.userId);
+            return patient !== undefined;
+          }).length;
+          const accuracy = adminPatients.length > 0 && totalGoals > 0
+            ? (completedGoals.length / totalGoals) * 100
+            : 92; // Default for high performance
+          const safeAccuracy = isNaN(accuracy) ? 92 : Math.max(0, Math.min(100, accuracy));
+
+          const empathy = ratings.length > 0 ? (avgRating / 5) * 100 : 96; // Default matching 4.8/5.0 = 96%
+          const safeEmpathy = isNaN(empathy) ? 96 : Math.max(0, Math.min(100, empathy));
+
+          // Timeliness from schedule (appointments completed on time)
+          const onTimeAppointments = scheduleStore.filter(s => {
+            const patient = adminPatients.find(p => p.id === s.patientId || p.patientId === s.patientId);
+            return patient !== undefined && s.status === 'done';
+          });
+          const timeliness = onTimeAppointments.length > 0 ? 88 : 90; // Default for high performance
+          const safeTimeliness = isNaN(timeliness) ? 90 : Math.max(0, Math.min(100, timeliness));
+
+          const hygiene = safeSafetyScore;
+          const compliance = safeAvgAdherence;
+
+          // The Loop Status (system health) - use safe values
+          const systemHealth = (safeAccuracy + safeEmpathy + safeTimeliness + hygiene + compliance) / 5;
+          const safeSystemHealth = isNaN(systemHealth) ? 95 : systemHealth;
+          const loopStatus = safeSystemHealth >= 90 ? 'healthy' : safeSystemHealth >= 75 ? 'moderate' : 'needs_attention';
+
+          // Role Contribution (token earnings by role)
+          const roleContributions = {
+            doctors: 0,
+            nurses: 0,
+            techs: 0,
+          };
+          adminStaff.forEach(staff => {
+            const staffPatients = adminPatients.filter(p => p.providerId === staff.id);
+            const staffPatientIds = staffPatients.map(p => p.id);
+            const staffTips = tipsStore.filter(t => {
+              const patientId = t.patientId?.toString() || '';
+              return staffPatientIds.some(id => id === patientId || patientId === id.toString());
+            });
+            const totalEarnings = staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
+
+            // Determine role (simplified - in production, use actual role field)
+            if (staff.name.toLowerCase().includes('dr') || staff.name.toLowerCase().includes('doctor')) {
+              roleContributions.doctors += totalEarnings;
+            } else if (staff.name.toLowerCase().includes('nurse')) {
+              roleContributions.nurses += totalEarnings;
+            } else {
+              roleContributions.techs += totalEarnings;
+            }
+          });
+
+          // Calculate percentages for role contribution
+          const totalRoleEarnings = roleContributions.doctors + roleContributions.nurses + roleContributions.techs;
+          const roleContributionPercentages = {
+            doctors: totalRoleEarnings > 0 ? (roleContributions.doctors / totalRoleEarnings) * 100 : 85,
+            nurses: totalRoleEarnings > 0 ? (roleContributions.nurses / totalRoleEarnings) * 100 : 92,
+            techs: totalRoleEarnings > 0 ? (roleContributions.techs / totalRoleEarnings) * 100 : 78,
+          };
+
+          // Patient Journey Heatmap - detect bottlenecks
+          const dischargeDelays = scheduleStore.filter(s => {
+            const patient = adminPatients.find(p => p.id === s.patientId || p.patientId === s.patientId);
+            return patient !== undefined && s.type === 'discharge' && s.status !== 'done';
+          });
+          const hasBottleneck = dischargeDelays.length > 0;
+          const bottleneckMessage = hasBottleneck
+            ? `Discharge delays of +45m impacting overall Exp Score.`
+            : null;
+
+          // Remorse & Learning - top trigger from alerts
+          const alertTypes = alertsStore.filter(a => {
+            const patient = adminPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
+            return patient !== undefined;
+          }).reduce((acc, alert) => {
+            acc[alert.type] = (acc[alert.type] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>);
+
+          const topTrigger = Object.entries(alertTypes).sort((a, b) => (b[1] as number) - (a[1] as number))[0];
+          const remorseData = topTrigger
+            ? {
               trigger: topTrigger[0].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-              frequency: topTrigger[1] > 3 ? 'High' : topTrigger[1] > 1 ? 'Medium' : 'Low',
+              frequency: (topTrigger[1] as number) > 3 ? 'High' : (topTrigger[1] as number) > 1 ? 'Medium' : 'Low',
               description: 'Common across Night Shift nurses in Ward B.',
               systemAction: 'Micro-training "Timely Vitals" auto-assigned to 12 staff members. Completion Incentive: 50 Tokens.',
             }
-          : {
+            : {
               trigger: 'Late Vitals Log',
               frequency: 'High',
               description: 'Common across Night Shift nurses in Ward B.',
               systemAction: 'Micro-training "Timely Vitals" auto-assigned to 12 staff members. Completion Incentive: 50 Tokens.',
             };
-        
-        // ESG Impact
-        // Image shows 120 surgeries from $12k, so $100 per surgery (not $1000)
-        const freeSurgeries = totalDonationsUSD > 0
-          ? Math.floor(totalDonationsUSD / 100) // $100 per surgery (matching image: 120 from $12k)
-          : 120; // Default matching image: 120 Free Surgeries
-        const medicalWasteReduction = 15; // Default matching image: 15%
-        
-        const result = {
-          patientExperience: Math.round(patientExperience * 10) / 10,
-          clinicalDiscipline: Math.round(safeAvgAdherence),
-          safetyHygiene: Math.round(safeSafetyScore),
-          staffEngagement: Math.round(safeAvgStaffEngagement),
-          esgCharity: Math.round(totalDonationsUSD / 1000), // In thousands
-          careRadar: {
-            accuracy: Math.round(safeAccuracy),
-            empathy: Math.round(safeEmpathy),
-            timeliness: Math.round(safeTimeliness),
-            hygiene: Math.round(hygiene),
-            compliance: Math.round(compliance),
-          },
-          loopStatus,
-          roleContribution: roleContributionPercentages,
-          journeyBottleneck: {
-            detected: hasBottleneck,
-            message: bottleneckMessage,
-          },
-          remorseLearning: remorseData,
-          esgImpact: {
-            freeSurgeries,
-            medicalWasteReduction,
-          },
-        };
-        
-        console.log('[Admin API] ✅ Result calculated successfully');
-        console.log('[Admin API] Result data:', {
-          patientExperience: result.patientExperience,
-          clinicalDiscipline: result.clinicalDiscipline,
-          safetyHygiene: result.safetyHygiene,
-          staffEngagement: result.staffEngagement,
-          esgCharity: result.esgCharity,
-          hasCareRadar: !!result.careRadar,
-          hasRoleContribution: !!result.roleContribution,
-          hasRemorseLearning: !!result.remorseLearning,
-          hasEsgImpact: !!result.esgImpact,
-        });
-        
-        // Validate result before returning
-        if (!result || typeof result !== 'object') {
-          console.error('[Admin API] ❌ Invalid result object:', result);
-          throw new Error('Invalid result object generated');
-        }
-        
-        // Validate all required fields
-        const requiredFields = ['patientExperience', 'clinicalDiscipline', 'safetyHygiene', 'staffEngagement', 'esgCharity', 'careRadar', 'loopStatus', 'roleContribution', 'journeyBottleneck', 'remorseLearning', 'esgImpact'];
-        const missingFields = requiredFields.filter(field => !(field in result));
-        if (missingFields.length > 0) {
-          console.error('[Admin API] ❌ Missing required fields:', missingFields);
-          throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-        }
-        
-        console.log('[Admin API] ✅ Returning result object');
-        console.log('[Admin API] ========== getCommandCenter END (SUCCESS) ==========');
-        return result;
+
+          // ESG Impact
+          // Image shows 120 surgeries from $12k, so $100 per surgery (not $1000)
+          const freeSurgeries = totalDonationsUSD > 0
+            ? Math.floor(totalDonationsUSD / 100) // $100 per surgery (matching image: 120 from $12k)
+            : 120; // Default matching image: 120 Free Surgeries
+          const medicalWasteReduction = 15; // Default matching image: 15%
+
+          const result = {
+            patientExperience: Math.round(patientExperience * 10) / 10,
+            clinicalDiscipline: Math.round(safeAvgAdherence),
+            safetyHygiene: Math.round(safeSafetyScore),
+            staffEngagement: Math.round(safeAvgStaffEngagement),
+            esgCharity: Math.round(totalDonationsUSD / 1000), // In thousands
+            careRadar: {
+              accuracy: Math.round(safeAccuracy),
+              empathy: Math.round(safeEmpathy),
+              timeliness: Math.round(safeTimeliness),
+              hygiene: Math.round(hygiene),
+              compliance: Math.round(compliance),
+            },
+            loopStatus,
+            roleContribution: roleContributionPercentages,
+            journeyBottleneck: {
+              detected: hasBottleneck,
+              message: bottleneckMessage,
+            },
+            remorseLearning: remorseData,
+            esgImpact: {
+              freeSurgeries,
+              medicalWasteReduction,
+            },
+          };
+
+          console.log('[Admin API] ✅ Result calculated successfully');
+          console.log('[Admin API] Result data:', {
+            patientExperience: result.patientExperience,
+            clinicalDiscipline: result.clinicalDiscipline,
+            safetyHygiene: result.safetyHygiene,
+            staffEngagement: result.staffEngagement,
+            esgCharity: result.esgCharity,
+            hasCareRadar: !!result.careRadar,
+            hasRoleContribution: !!result.roleContribution,
+            hasRemorseLearning: !!result.remorseLearning,
+            hasEsgImpact: !!result.esgImpact,
+          });
+
+          // Validate result before returning
+          if (!result || typeof result !== 'object') {
+            console.error('[Admin API] ❌ Invalid result object:', result);
+            throw new Error('Invalid result object generated');
+          }
+
+          // Validate all required fields
+          const requiredFields = ['patientExperience', 'clinicalDiscipline', 'safetyHygiene', 'staffEngagement', 'esgCharity', 'careRadar', 'loopStatus', 'roleContribution', 'journeyBottleneck', 'remorseLearning', 'esgImpact'];
+          const missingFields = requiredFields.filter(field => !(field in result));
+          if (missingFields.length > 0) {
+            console.error('[Admin API] ❌ Missing required fields:', missingFields);
+            throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+          }
+
+          console.log('[Admin API] ✅ Returning result object');
+          console.log('[Admin API] ========== getCommandCenter END (SUCCESS) ==========');
+          return result;
         } catch (error) {
           console.error('[Admin API] ❌ Error in getCommandCenter:', error);
           console.error('[Admin API] Error name:', error instanceof Error ? error.name : 'Unknown');
           console.error('[Admin API] Error message:', error instanceof Error ? error.message : String(error));
           console.error('[Admin API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-          
+
           // Return default data structure even on error to prevent empty response
           const defaultResult = {
             patientExperience: 4.8,
@@ -2707,7 +2602,7 @@ export const appRouter = {
               medicalWasteReduction: 15,
             },
           };
-          
+
           console.log('[Admin API] ⚠️ Returning default data due to error');
           console.log('[Admin API] ========== getCommandCenter END (ERROR - DEFAULT) ==========');
           return defaultResult;
@@ -2723,13 +2618,13 @@ export const appRouter = {
       .handler(async ({ input }) => {
         console.log('[Admin API] ========== getLeaderboard START ==========');
         console.log('[Admin API] getLeaderboard called with adminId:', input.adminId, 'role:', input.role, 'search:', input.search);
-        
+
         // Validate adminId first
         if (!input.adminId || typeof input.adminId !== 'string') {
           console.error('[Admin API] ❌ Invalid adminId:', input.adminId);
           throw new Error('Invalid adminId provided');
         }
-        
+
         // Verify admin exists
         const admin = usersStore.find(u => u.id === input.adminId && u.role === 'ADMIN');
         if (!admin) {
@@ -2737,141 +2632,141 @@ export const appRouter = {
         } else {
           console.log('[Admin API] ✅ Admin found:', admin.name, admin.id);
         }
-        
+
         try {
           // Get all staff under this admin
           const allStaff = usersStore.filter(u => u.role === 'STAFF');
           console.log('[Admin API] Total staff in store:', allStaff.length);
           console.log('[Admin API] Staff with adminId:', allStaff.filter(u => u.adminId).map(u => ({ id: u.id, name: u.name, adminId: u.adminId })));
-          
+
           let staff = allStaff.filter(u => u.role === 'STAFF' && u.adminId === input.adminId);
           console.log('[Admin API] Staff filtered by adminId:', staff.length, 'staff members found');
-        
-        // Filter by role if specified
-        if (input.role && input.role !== 'all') {
-          staff = staff.filter(s => {
-            const nameLower = s.name.toLowerCase();
-            if (input.role === 'doctors') {
-              return nameLower.includes('dr') || nameLower.includes('doctor');
-            } else if (input.role === 'nurses') {
-              return nameLower.includes('nurse');
-            } else if (input.role === 'techs') {
-              return !nameLower.includes('dr') && !nameLower.includes('doctor') && !nameLower.includes('nurse');
-            }
-            return true;
+
+          // Filter by role if specified
+          if (input.role && input.role !== 'all') {
+            staff = staff.filter(s => {
+              const nameLower = s.name.toLowerCase();
+              if (input.role === 'doctors') {
+                return nameLower.includes('dr') || nameLower.includes('doctor');
+              } else if (input.role === 'nurses') {
+                return nameLower.includes('nurse');
+              } else if (input.role === 'techs') {
+                return !nameLower.includes('dr') && !nameLower.includes('doctor') && !nameLower.includes('nurse');
+              }
+              return true;
+            });
+          }
+
+          // Apply search filter
+          if (input.search) {
+            const searchLower = input.search.toLowerCase();
+            staff = staff.filter(s =>
+              s.name.toLowerCase().includes(searchLower) ||
+              s.email.toLowerCase().includes(searchLower)
+            );
+          }
+
+          // Get all patients under this admin
+          const adminPatients = patientsStore.filter(p => p.adminId === input.adminId);
+          console.log('[Admin API] Patients under admin:', adminPatients.length);
+          console.log('[Admin API] Total patients in store:', patientsStore.length);
+
+          // Calculate RPI for each staff member
+          const staffWithRPI = staff.map(s => {
+            // Get patients assigned to this staff
+            const staffPatients = adminPatients.filter(p => p.providerId === s.id);
+            const staffPatientIds = staffPatients.map(p => p.id);
+
+            // Calculate patient satisfaction (from tips/ratings)
+            const staffTips = tipsStore.filter(t => {
+              const patientId = t.patientId?.toString() || '';
+              return staffPatientIds.some(id => id === patientId || patientId === id.toString());
+            });
+            const ratings = staffTips.filter(t => t.type === 'rating');
+            const avgRating = ratings.length > 0
+              ? ratings.reduce((sum, r) => sum + (r.rating || 0), 0) / ratings.length
+              : 4.0;
+            const patientSatisfaction = (avgRating / 5) * 100;
+
+            // Calculate average adherence of assigned patients
+            const avgAdherence = staffPatients.length > 0
+              ? staffPatients.reduce((sum, p) => sum + (p.adherenceScore || 0), 0) / staffPatients.length
+              : 75;
+
+            // Calculate token earnings
+            const totalTips = staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
+            const tokenEarnings = totalTips;
+
+            // Count critical alerts (negative impact)
+            const criticalAlerts = alertsStore.filter(a => {
+              const patient = staffPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
+              return patient !== undefined && a.severity === 'high';
+            }).length;
+
+            // Calculate RPI
+            const rpi = (patientSatisfaction * 0.3) + (avgAdherence * 0.3) + (tokenEarnings / 1000 * 0.2) - (criticalAlerts * 2);
+            const clampedRPI = Math.max(0, Math.min(100, Math.round(rpi)));
+
+            // Determine key strength
+            let keyStrength = 'Consistency';
+            if (patientSatisfaction > 90) keyStrength = 'Patient Satisfaction';
+            else if (avgAdherence > 90) keyStrength = 'High Adherence';
+            else if (tokenEarnings > 1000) keyStrength = 'High Earnings';
+            else if (criticalAlerts === 0) keyStrength = 'Safety Excellence';
+
+            return {
+              id: s.id,
+              name: s.name,
+              email: s.email,
+              role: s.role,
+              rpi: clampedRPI,
+              tokenEarnings: Math.round(tokenEarnings),
+              keyStrength,
+              patientCount: staffPatients.length,
+              avatar: s.avatar || '',
+            };
           });
-        }
-        
-        // Apply search filter
-        if (input.search) {
-          const searchLower = input.search.toLowerCase();
-          staff = staff.filter(s => 
-            s.name.toLowerCase().includes(searchLower) ||
-            s.email.toLowerCase().includes(searchLower)
-          );
-        }
-        
-        // Get all patients under this admin
-        const adminPatients = patientsStore.filter(p => p.adminId === input.adminId);
-        console.log('[Admin API] Patients under admin:', adminPatients.length);
-        console.log('[Admin API] Total patients in store:', patientsStore.length);
-        
-        // Calculate RPI for each staff member
-        const staffWithRPI = staff.map(s => {
-          // Get patients assigned to this staff
-          const staffPatients = adminPatients.filter(p => p.providerId === s.id);
-          const staffPatientIds = staffPatients.map(p => p.id);
-          
-          // Calculate patient satisfaction (from tips/ratings)
-          const staffTips = tipsStore.filter(t => {
-            const patientId = t.patientId?.toString() || '';
-            return staffPatientIds.some(id => id === patientId || patientId === id.toString());
-          });
-          const ratings = staffTips.filter(t => t.type === 'rating');
-          const avgRating = ratings.length > 0
-            ? ratings.reduce((sum, r) => sum + (r.rating || 0), 0) / ratings.length
-            : 4.0;
-          const patientSatisfaction = (avgRating / 5) * 100;
-          
-          // Calculate average adherence of assigned patients
-          const avgAdherence = staffPatients.length > 0
-            ? staffPatients.reduce((sum, p) => sum + (p.adherenceScore || 0), 0) / staffPatients.length
-            : 75;
-          
-          // Calculate token earnings
-          const totalTips = staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
-          const tokenEarnings = totalTips;
-          
-          // Count critical alerts (negative impact)
-          const criticalAlerts = alertsStore.filter(a => {
-            const patient = staffPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
-            return patient !== undefined && a.severity === 'high';
-          }).length;
-          
-          // Calculate RPI
-          const rpi = (patientSatisfaction * 0.3) + (avgAdherence * 0.3) + (tokenEarnings / 1000 * 0.2) - (criticalAlerts * 2);
-          const clampedRPI = Math.max(0, Math.min(100, Math.round(rpi)));
-          
-          // Determine key strength
-          let keyStrength = 'Consistency';
-          if (patientSatisfaction > 90) keyStrength = 'Patient Satisfaction';
-          else if (avgAdherence > 90) keyStrength = 'High Adherence';
-          else if (tokenEarnings > 1000) keyStrength = 'High Earnings';
-          else if (criticalAlerts === 0) keyStrength = 'Safety Excellence';
-          
-          return {
-            id: s.id,
-            name: s.name,
-            email: s.email,
-            role: s.role,
-            rpi: clampedRPI,
-            tokenEarnings: Math.round(tokenEarnings),
-            keyStrength,
-            patientCount: staffPatients.length,
-            avatar: s.avatar || '',
+
+          // Sort by RPI (descending)
+          staffWithRPI.sort((a, b) => b.rpi - a.rpi);
+
+          // Add rank
+          const ranked = staffWithRPI.map((s, index) => ({
+            ...s,
+            rank: index + 1,
+          }));
+
+          // Get top performer, most improved, dept velocity
+          const topPerformer = ranked[0] || null;
+          const mostImproved = ranked.find(s => s.rpi > 80) || ranked[0] || null;
+          const deptVelocity = ranked.reduce((sum, s) => sum + s.tokenEarnings, 0);
+
+          const result = {
+            staff: ranked,
+            topPerformer: topPerformer ? {
+              name: topPerformer.name,
+              rpi: topPerformer.rpi,
+              tokenEarnings: topPerformer.tokenEarnings,
+            } : null,
+            mostImproved: mostImproved ? {
+              name: mostImproved.name,
+              improvement: '+15%',
+              tokenEarnings: mostImproved.tokenEarnings,
+            } : null,
+            deptVelocity,
           };
-        });
-        
-        // Sort by RPI (descending)
-        staffWithRPI.sort((a, b) => b.rpi - a.rpi);
-        
-        // Add rank
-        const ranked = staffWithRPI.map((s, index) => ({
-          ...s,
-          rank: index + 1,
-        }));
-        
-        // Get top performer, most improved, dept velocity
-        const topPerformer = ranked[0] || null;
-        const mostImproved = ranked.find(s => s.rpi > 80) || ranked[0] || null;
-        const deptVelocity = ranked.reduce((sum, s) => sum + s.tokenEarnings, 0);
-        
-        const result = {
-          staff: ranked,
-          topPerformer: topPerformer ? {
-            name: topPerformer.name,
-            rpi: topPerformer.rpi,
-            tokenEarnings: topPerformer.tokenEarnings,
-          } : null,
-          mostImproved: mostImproved ? {
-            name: mostImproved.name,
-            improvement: '+15%',
-            tokenEarnings: mostImproved.tokenEarnings,
-          } : null,
-          deptVelocity,
-        };
-        
-        console.log('[Admin API] ✅ Returning leaderboard result:', {
-          staffCount: ranked.length,
-          topPerformer: result.topPerformer?.name || 'None',
-          deptVelocity: result.deptVelocity,
-        });
-        console.log('[Admin API] ========== getLeaderboard END (SUCCESS) ==========');
-        return result;
+
+          console.log('[Admin API] ✅ Returning leaderboard result:', {
+            staffCount: ranked.length,
+            topPerformer: result.topPerformer?.name || 'None',
+            deptVelocity: result.deptVelocity,
+          });
+          console.log('[Admin API] ========== getLeaderboard END (SUCCESS) ==========');
+          return result;
         } catch (error) {
           console.error('[Admin API] ❌ Error in getLeaderboard:', error);
           console.error('[Admin API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-          
+
           // Return default empty data structure on error
           const defaultResult = {
             staff: [],
@@ -2890,93 +2785,93 @@ export const appRouter = {
       .handler(async ({ input }) => {
         console.log('[Admin API] ========== getTokenEconomy START ==========');
         console.log('[Admin API] getTokenEconomy called with adminId:', input.adminId);
-        
+
         // Validate adminId first
         if (!input.adminId || typeof input.adminId !== 'string') {
           console.error('[Admin API] ❌ Invalid adminId:', input.adminId);
           throw new Error('Invalid adminId provided');
         }
-        
+
         try {
           // Get all patients and staff under this admin
           const adminPatients = patientsStore.filter(p => p.adminId === input.adminId);
           const adminStaff = usersStore.filter(u => u.role === 'STAFF' && u.adminId === input.adminId);
           console.log('[Admin API] Found', adminPatients.length, 'patients and', adminStaff.length, 'staff under adminId:', input.adminId);
-        
-        // Calculate Circulating Liability (sum of all wallet balances)
-        const patientEarnings = adminPatients.reduce((sum, p) => sum + (p.rdmEarnings || 0), 0);
-        const staffEarnings = adminStaff.map(staff => {
-          const staffPatients = adminPatients.filter(p => p.providerId === staff.id);
-          const staffPatientIds = staffPatients.map(p => p.id);
-          const staffTips = tipsStore.filter(t => {
-            const patientId = t.patientId?.toString() || '';
-            return staffPatientIds.some(id => id === patientId || patientId === id.toString());
+
+          // Calculate Circulating Liability (sum of all wallet balances)
+          const patientEarnings = adminPatients.reduce((sum, p) => sum + (p.rdmEarnings || 0), 0);
+          const staffEarnings = adminStaff.map(staff => {
+            const staffPatients = adminPatients.filter(p => p.providerId === staff.id);
+            const staffPatientIds = staffPatients.map(p => p.id);
+            const staffTips = tipsStore.filter(t => {
+              const patientId = t.patientId?.toString() || '';
+              return staffPatientIds.some(id => id === patientId || patientId === id.toString());
+            });
+            return staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
+          }).reduce((sum, e) => sum + e, 0);
+          const circulatingLiability = patientEarnings + staffEarnings;
+
+          // Calculate Remorse Pool (sum of burned tokens)
+          const adminBurns = tokenBurnsStore.filter(b => {
+            if (b.staffId) {
+              return adminStaff.some(s => s.id === b.staffId);
+            }
+            return false;
           });
-          return staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
-        }).reduce((sum, e) => sum + e, 0);
-        const circulatingLiability = patientEarnings + staffEarnings;
-        
-        // Calculate Remorse Pool (sum of burned tokens)
-        const adminBurns = tokenBurnsStore.filter(b => {
-          if (b.staffId) {
-            return adminStaff.some(s => s.id === b.staffId);
-          }
-          return false;
-        });
-        const remorsePool = adminBurns.reduce((sum, b) => sum + (b.amount || 0), 0);
-        
-        // Calculate CSR Fund Value (from donations and completed pledges)
-        const adminDonations = donationsStore.filter(d => {
-          if (d.staffId) {
-            return adminStaff.some(s => s.id === d.staffId);
-          }
-          if (d.patientId) {
-            return adminPatients.some(p => p.id === d.patientId || p.patientId === d.patientId);
-          }
-          return false;
-        });
-        const completedPledges = pledgesStore.filter(p => {
-          const patient = adminPatients.find(pat => pat.id === p.patientId || pat.patientId === p.patientId);
-          return patient !== undefined && p.status === 'completed';
-        });
-        const totalDonationsRDM = adminDonations.reduce((sum, d) => sum + (d.amount || 0), 0) +
-          completedPledges.reduce((sum, p) => sum + (p.amount || 0), 0);
-        const csrFundValue = totalDonationsRDM * 0.01; // 100 RDM = $1
-        
-        // Conversion Rate (fixed)
-        const conversionRate = { rdm: 100, usd: 1 };
-        
-        // Minting vs Burning breakdown
-        const adminMints = tokenMintsStore.filter(m => {
-          if (m.patientId) {
-            return adminPatients.some(p => p.id === m.patientId || p.patientId === m.patientId);
-          }
-          if (m.staffId) {
-            return adminStaff.some(s => s.id === m.staffId);
-          }
-          return false;
-        });
-        
-        const adherenceRewards = adminMints.filter(m => m.reason === 'adherence_reward')
-          .reduce((sum, m) => sum + (m.amount || 0), 0);
-        const efficiencyBonuses = adminMints.filter(m => m.reason === 'efficiency_bonus')
-          .reduce((sum, m) => sum + (m.amount || 0), 0);
-        const tipsMinted = tipsStore.filter(t => {
-          const patient = adminPatients.find(p => p.id === t.patientId || p.patientId === t.patientId);
-          return patient !== undefined;
-        }).reduce((sum, t) => sum + (t.amount || 0), 0);
-        
-        const totalMinted = adherenceRewards + efficiencyBonuses + tipsMinted;
-        
-        const donationsBurned = adminDonations.reduce((sum, d) => sum + (d.amount || 0), 0);
-        const penaltiesBurned = adminBurns.reduce((sum, b) => sum + (b.amount || 0), 0);
-        const totalBurned = donationsBurned + penaltiesBurned;
-        
-        // Tangible Impact
-        const patientsSubsidized = Math.floor(csrFundValue / 1000); // $1000 per patient
-        const freeLabTests = Math.floor(csrFundValue / 25); // $25 per lab test
-        const energySaved = 15; // Placeholder
-        
+          const remorsePool = adminBurns.reduce((sum, b) => sum + (b.amount || 0), 0);
+
+          // Calculate CSR Fund Value (from donations and completed pledges)
+          const adminDonations = donationsStore.filter(d => {
+            if (d.staffId) {
+              return adminStaff.some(s => s.id === d.staffId);
+            }
+            if (d.patientId) {
+              return adminPatients.some(p => p.id === d.patientId || p.patientId === d.patientId);
+            }
+            return false;
+          });
+          const completedPledges = pledgesStore.filter(p => {
+            const patient = adminPatients.find(pat => pat.id === p.patientId || pat.patientId === p.patientId);
+            return patient !== undefined && p.status === 'completed';
+          });
+          const totalDonationsRDM = adminDonations.reduce((sum, d) => sum + (d.amount || 0), 0) +
+            completedPledges.reduce((sum, p) => sum + (p.amount || 0), 0);
+          const csrFundValue = totalDonationsRDM * 0.01; // 100 RDM = $1
+
+          // Conversion Rate (fixed)
+          const conversionRate = { rdm: 100, usd: 1 };
+
+          // Minting vs Burning breakdown
+          const adminMints = tokenMintsStore.filter(m => {
+            if (m.patientId) {
+              return adminPatients.some(p => p.id === m.patientId || p.patientId === m.patientId);
+            }
+            if (m.staffId) {
+              return adminStaff.some(s => s.id === m.staffId);
+            }
+            return false;
+          });
+
+          const adherenceRewards = adminMints.filter(m => m.reason === 'adherence_reward')
+            .reduce((sum, m) => sum + (m.amount || 0), 0);
+          const efficiencyBonuses = adminMints.filter(m => m.reason === 'efficiency_bonus')
+            .reduce((sum, m) => sum + (m.amount || 0), 0);
+          const tipsMinted = tipsStore.filter(t => {
+            const patient = adminPatients.find(p => p.id === t.patientId || p.patientId === t.patientId);
+            return patient !== undefined;
+          }).reduce((sum, t) => sum + (t.amount || 0), 0);
+
+          const totalMinted = adherenceRewards + efficiencyBonuses + tipsMinted;
+
+          const donationsBurned = adminDonations.reduce((sum, d) => sum + (d.amount || 0), 0);
+          const penaltiesBurned = adminBurns.reduce((sum, b) => sum + (b.amount || 0), 0);
+          const totalBurned = donationsBurned + penaltiesBurned;
+
+          // Tangible Impact
+          const patientsSubsidized = Math.floor(csrFundValue / 1000); // $1000 per patient
+          const freeLabTests = Math.floor(csrFundValue / 25); // $25 per lab test
+          const energySaved = 15; // Placeholder
+
           const result = {
             circulatingLiability: Math.round(circulatingLiability),
             remorsePool: Math.round(remorsePool),
@@ -2999,7 +2894,7 @@ export const appRouter = {
               energySaved,
             },
           };
-          
+
           console.log('[Admin API] ✅ getTokenEconomy returning data:', {
             circulatingLiability: result.circulatingLiability,
             remorsePool: result.remorsePool,
@@ -3010,7 +2905,7 @@ export const appRouter = {
         } catch (error) {
           console.error('[Admin API] ❌ Error in getTokenEconomy:', error);
           console.error('[Admin API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-          
+
           // Return default data structure
           const defaultResult = {
             circulatingLiability: 0,
@@ -3048,129 +2943,129 @@ export const appRouter = {
       .handler(async ({ input }) => {
         console.log('[Admin API] ========== getAnalytics START ==========');
         console.log('[Admin API] getAnalytics called with adminId:', input.adminId, 'view:', input.view);
-        
+
         // Validate adminId first
         if (!input.adminId || typeof input.adminId !== 'string') {
           console.error('[Admin API] ❌ Invalid adminId:', input.adminId);
           throw new Error('Invalid adminId provided');
         }
-        
+
         try {
           const view = input.view || 'budget';
           const adminPatients = patientsStore.filter(p => p.adminId === input.adminId);
           const adminStaff = usersStore.filter(u => u.role === 'STAFF' && u.adminId === input.adminId);
           console.log('[Admin API] Found', adminPatients.length, 'patients and', adminStaff.length, 'staff under adminId:', input.adminId);
-        
-        if (view === 'budget') {
-          // Budget Utilization
-          const totalMonthlyBudget = 1000000; // 1M RDM
-          
-          // Calculate currently spent (sum of token distributions)
-          const patientEarnings = adminPatients.reduce((sum, p) => sum + (p.rdmEarnings || 0), 0);
-          const staffEarnings = adminStaff.map(staff => {
-            const staffPatients = adminPatients.filter(p => p.providerId === staff.id);
-            const staffPatientIds = staffPatients.map(p => p.id);
-            const staffTips = tipsStore.filter(t => {
-              const patientId = t.patientId?.toString() || '';
-              return staffPatientIds.some(id => id === patientId || patientId === id.toString());
+
+          if (view === 'budget') {
+            // Budget Utilization
+            const totalMonthlyBudget = 1000000; // 1M RDM
+
+            // Calculate currently spent (sum of token distributions)
+            const patientEarnings = adminPatients.reduce((sum, p) => sum + (p.rdmEarnings || 0), 0);
+            const staffEarnings = adminStaff.map(staff => {
+              const staffPatients = adminPatients.filter(p => p.providerId === staff.id);
+              const staffPatientIds = staffPatients.map(p => p.id);
+              const staffTips = tipsStore.filter(t => {
+                const patientId = t.patientId?.toString() || '';
+                return staffPatientIds.some(id => id === patientId || patientId === id.toString());
+              });
+              return staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
+            }).reduce((sum, e) => sum + e, 0);
+            const currentlySpent = patientEarnings + staffEarnings;
+            const spentPercentage = (currentlySpent / totalMonthlyBudget) * 100;
+
+            // Projected status
+            const daysInMonth = 30;
+            const currentDay = new Date().getDate();
+            const projectedSpend = (currentlySpent / currentDay) * daysInMonth;
+            const projectedStatus = projectedSpend > totalMonthlyBudget ? 'overspend_risk' : 'on_track';
+            const projectedDay = projectedSpend > totalMonthlyBudget
+              ? Math.ceil((totalMonthlyBudget / (currentlySpent / currentDay)))
+              : null;
+
+            // Cost efficiency
+            const completedGoals = goalsStore.filter(g => {
+              const patient = adminPatients.find(p => p.id === g.userId || p.patientId === g.userId);
+              return patient !== undefined && g.status === 'completed';
             });
-            return staffTips.reduce((sum, t) => sum + (t.amount || 0), 0);
-          }).reduce((sum, e) => sum + e, 0);
-          const currentlySpent = patientEarnings + staffEarnings;
-          const spentPercentage = (currentlySpent / totalMonthlyBudget) * 100;
-          
-          // Projected status
-          const daysInMonth = 30;
-          const currentDay = new Date().getDate();
-          const projectedSpend = (currentlySpent / currentDay) * daysInMonth;
-          const projectedStatus = projectedSpend > totalMonthlyBudget ? 'overspend_risk' : 'on_track';
-          const projectedDay = projectedSpend > totalMonthlyBudget
-            ? Math.ceil((totalMonthlyBudget / (currentlySpent / currentDay)))
-            : null;
-          
-          // Cost efficiency
-          const completedGoals = goalsStore.filter(g => {
-            const patient = adminPatients.find(p => p.id === g.userId || p.patientId === g.userId);
-            return patient !== undefined && g.status === 'completed';
-          });
-          const costPerSuccess = completedGoals.length > 0
-            ? currentlySpent / completedGoals.length
-            : 120;
-          
-          const budgetResult = {
-            view: 'budget' as const,
-            budget: {
-              totalMonthly: totalMonthlyBudget,
-              currentlySpent: Math.round(currentlySpent),
-              spentPercentage: Math.round(spentPercentage),
-              projectedStatus,
-              projectedDay,
-              costEfficiency: Math.round(costPerSuccess),
-            },
-          };
-          return budgetResult;
-        } else if (view === 'remorse') {
-          // Remorse Hotspots
-          const adminAlerts = alertsStore.filter(a => {
-            const patient = adminPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
-            return patient !== undefined;
-          });
-          
-          const alertByType = adminAlerts.reduce((acc, alert) => {
-            acc[alert.type] = (acc[alert.type] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
-          
-          const hotspots = Object.entries(alertByType).map(([type, count]) => ({
-            type: type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            count,
-            severity: count > 5 ? 'high' : count > 2 ? 'medium' : 'low',
-          })).sort((a, b) => b.count - a.count);
-          
-          const remorseResult = {
-            view: 'remorse' as const,
-            hotspots,
-          };
-          return remorseResult;
-        } else {
-          // Scorecard
-          const avgAdherence = adminPatients.length > 0
-            ? adminPatients.reduce((sum, p) => sum + (p.adherenceScore || 0), 0) / adminPatients.length
-            : 85;
-          
-          const ratings = tipsStore.filter(t => {
-            if (t.type !== 'rating') return false;
-            const patient = adminPatients.find(p => p.id === t.patientId || p.patientId === t.patientId);
-            return patient !== undefined;
-          });
-          const avgRating = ratings.length > 0
-            ? ratings.reduce((sum, r) => sum + (r.rating || 0), 0) / ratings.length
-            : 4.5;
-          
-          const criticalAlerts = alertsStore.filter(a => {
-            const patient = adminPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
-            return patient !== undefined && a.severity === 'high';
-          }).length;
-          
-          const result = {
-            view: 'scorecard' as const,
-            scorecard: {
-              adherence: Math.round(avgAdherence),
-              satisfaction: Math.round((avgRating / 5) * 100),
-              safety: Math.max(0, Math.min(100, 100 - (criticalAlerts * 2))),
-              efficiency: 88, // Placeholder
-            },
-          };
-          
-          console.log('[Admin API] ✅ getAnalytics returning data for view:', view);
-          console.log('[Admin API] ========== getAnalytics END (SUCCESS) ==========');
-          return result;
-        }
+            const costPerSuccess = completedGoals.length > 0
+              ? currentlySpent / completedGoals.length
+              : 120;
+
+            const budgetResult = {
+              view: 'budget' as const,
+              budget: {
+                totalMonthly: totalMonthlyBudget,
+                currentlySpent: Math.round(currentlySpent),
+                spentPercentage: Math.round(spentPercentage),
+                projectedStatus,
+                projectedDay,
+                costEfficiency: Math.round(costPerSuccess),
+              },
+            };
+            return budgetResult;
+          } else if (view === 'remorse') {
+            // Remorse Hotspots
+            const adminAlerts = alertsStore.filter(a => {
+              const patient = adminPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
+              return patient !== undefined;
+            });
+
+            const alertByType = adminAlerts.reduce((acc, alert) => {
+              acc[alert.type] = (acc[alert.type] || 0) + 1;
+              return acc;
+            }, {} as Record<string, number>);
+
+            const hotspots = Object.entries(alertByType).map(([type, count]) => ({
+              type: type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              count: count as number,
+              severity: (count as number) > 5 ? 'high' : (count as number) > 2 ? 'medium' : 'low',
+            })).sort((a, b) => (b.count as number) - (a.count as number));
+
+            const remorseResult = {
+              view: 'remorse' as const,
+              hotspots,
+            };
+            return remorseResult;
+          } else {
+            // Scorecard
+            const avgAdherence = adminPatients.length > 0
+              ? adminPatients.reduce((sum, p) => sum + (p.adherenceScore || 0), 0) / adminPatients.length
+              : 85;
+
+            const ratings = tipsStore.filter(t => {
+              if (t.type !== 'rating') return false;
+              const patient = adminPatients.find(p => p.id === t.patientId || p.patientId === t.patientId);
+              return patient !== undefined;
+            });
+            const avgRating = ratings.length > 0
+              ? ratings.reduce((sum, r) => sum + (r.rating || 0), 0) / ratings.length
+              : 4.5;
+
+            const criticalAlerts = alertsStore.filter(a => {
+              const patient = adminPatients.find(p => p.id === a.patientId || p.patientId === a.patientId);
+              return patient !== undefined && a.severity === 'high';
+            }).length;
+
+            const result = {
+              view: 'scorecard' as const,
+              scorecard: {
+                adherence: Math.round(avgAdherence),
+                satisfaction: Math.round((avgRating / 5) * 100),
+                safety: Math.max(0, Math.min(100, 100 - (criticalAlerts * 2))),
+                efficiency: 88, // Placeholder
+              },
+            };
+
+            console.log('[Admin API] ✅ getAnalytics returning data for view:', view);
+            console.log('[Admin API] ========== getAnalytics END (SUCCESS) ==========');
+            return result;
+          }
         } catch (error) {
           console.error('[Admin API] ❌ Error in getAnalytics:', error);
           console.error('[Admin API] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
           const view = input.view || 'budget';
-          
+
           // Return default data structure based on view
           let defaultResult;
           if (view === 'budget') {
