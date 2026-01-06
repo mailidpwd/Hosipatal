@@ -44,31 +44,49 @@ export class UserService extends BaseService {
   async getMyPledges(userId?: string): Promise<Pledge[]> {
     return this.handleRequest(async () => {
       try {
-        const response = await (client as any).provider.getMyPledges({ userId });
+        // Short timeout: if API is unreachable, fallback to local storage
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Request timeout')), 2000);
+        });
+        const response = await Promise.race([
+          (client as any).provider.getMyPledges({ userId }),
+          timeoutPromise,
+        ]);
         return response as Pledge[];
       } catch (error: any) {
-        // Demo mode fallback - check sessionStorage for created pledges
-        if (userId === '83921' || userId?.includes('83921')) {
-          console.log('[UserService] Using demo pledges data for Michael Chen');
-          try {
-            const storedPledges = sessionStorage.getItem('demo_pledges');
-            if (storedPledges) {
-              const pledges = JSON.parse(storedPledges);
-              // Filter pledges for this user
-              const userPledges = pledges.filter((p: Pledge) => 
-                p.patientId === userId || p.patientId === '83921' || p.patientId?.includes('83921')
-              );
-              if (userPledges.length > 0) {
-                return userPledges;
-              }
-            }
-          } catch (e) {
-            console.warn('[UserService] Failed to parse stored pledges:', e);
+        // Demo mode fallback - check both sessionStorage and localStorage for created pledges
+        const normalizeId = (id?: string | null) => (id ? String(id).replace('#', '').trim() : '');
+        const normalizedUserId = normalizeId(userId);
+        try {
+          const fromSession = (() => {
+            try {
+              const s = sessionStorage.getItem('demo_pledges');
+              return s ? JSON.parse(s) : [];
+            } catch { return []; }
+          })();
+          const fromLocal = (() => {
+            try {
+              const l = localStorage.getItem('demo_pledges');
+              return l ? JSON.parse(l) : [];
+            } catch { return []; }
+          })();
+          // Merge and de-duplicate by pledge id
+          const map = new Map<string, Pledge>();
+          [...fromSession, ...fromLocal].forEach((p: Pledge) => map.set(p.id, p));
+          const pledges = Array.from(map.values());
+          const userPledges = pledges.filter((p: Pledge) => {
+            const pid = normalizeId(p.patientId);
+            return pid === normalizedUserId || pid === '83921';
+          });
+          if (userPledges.length > 0) {
+            console.log('[UserService] ✅ Returning demo pledges from storage:', userPledges.length);
+            return userPledges;
           }
-          // Return empty array if no stored pledges
-          return [];
+        } catch (e) {
+          console.warn('[UserService] Failed to parse stored pledges:', e);
         }
-        throw error; // Re-throw if not demo patient
+        // Return empty array if no stored pledges
+        return [];
       }
     });
   }
@@ -82,33 +100,39 @@ export class UserService extends BaseService {
         const response = await (client as any).provider.acceptPledge({ pledgeId });
         return response as Pledge;
       } catch (error: any) {
-        // Demo mode fallback - update pledge in sessionStorage
+        // Demo mode fallback - update pledge in sessionStorage and localStorage
         console.log('[UserService] Using demo acceptPledge for pledge:', pledgeId);
         try {
-          const storedPledges = sessionStorage.getItem('demo_pledges');
-          if (storedPledges) {
-            const pledges = JSON.parse(storedPledges);
-            const pledgeIndex = pledges.findIndex((p: Pledge) => p.id === pledgeId);
-            if (pledgeIndex !== -1) {
-              const pledge = pledges[pledgeIndex];
-              const now = new Date();
-              const endDate = new Date(now);
-              endDate.setDate(endDate.getDate() + (pledge.totalDays || 7));
-              
-              const updatedPledge: Pledge = {
-                ...pledge,
-                accepted: true,
-                acceptedAt: now.toISOString(),
-                startDate: now.toISOString(),
-                endDate: endDate.toISOString(),
-                status: 'active',
-              };
-              
-              pledges[pledgeIndex] = updatedPledge;
-              sessionStorage.setItem('demo_pledges', JSON.stringify(pledges));
-              console.log('[UserService] ✅ Updated pledge in sessionStorage');
-              return updatedPledge;
-            }
+          const read = (): Pledge[] => {
+            const s = (() => { try { const v = sessionStorage.getItem('demo_pledges'); return v ? JSON.parse(v) : []; } catch { return []; } })();
+            const l = (() => { try { const v = localStorage.getItem('demo_pledges'); return v ? JSON.parse(v) : []; } catch { return []; } })();
+            const map = new Map<string, Pledge>();
+            [...s, ...l].forEach((p: Pledge) => map.set(p.id, p));
+            return Array.from(map.values());
+          };
+          const pledges = read();
+          const index = pledges.findIndex((p: Pledge) => p.id === pledgeId);
+          if (index !== -1) {
+            const pledge = pledges[index];
+            const now = new Date();
+            const endDate = new Date(now);
+            endDate.setDate(endDate.getDate() + (pledge.totalDays || 7));
+            const updated: Pledge = {
+              ...pledge,
+              accepted: true,
+              acceptedAt: now.toISOString(),
+              startDate: now.toISOString(),
+              endDate: endDate.toISOString(),
+              status: 'active',
+            };
+            pledges[index] = updated;
+            // Write back to both storages
+            try { sessionStorage.setItem('demo_pledges', JSON.stringify(pledges)); } catch {}
+            try { localStorage.setItem('demo_pledges', JSON.stringify(pledges)); } catch {}
+            // Notify same-tab listeners
+            try { window.dispatchEvent(new Event('demo_pledges_updated')); } catch {}
+            console.log('[UserService] ✅ Updated pledge in storage');
+            return updated;
           }
         } catch (e) {
           console.warn('[UserService] Failed to update stored pledge:', e);
