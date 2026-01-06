@@ -10,6 +10,15 @@ if (!rootElement) {
 }
 
 try {
+  // NUCLEAR OPTION: Clear ALL notification storage immediately on app load
+  try {
+    sessionStorage.removeItem('demo_notifications');
+    localStorage.removeItem('demo_notifications');
+    console.log('[main.tsx] ✅ Cleared all notification storage on app startup');
+  } catch (e) {
+    console.warn('[main.tsx] Failed to clear notification storage:', e);
+  }
+  
   // Register service worker with safety: if it fails (often due to cached workbox chunk),
   // automatically unregister old SWs + clear caches so the app recovers without manual user steps.
   if ('serviceWorker' in navigator) {

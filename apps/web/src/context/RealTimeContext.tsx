@@ -30,6 +30,17 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
   const authContext = useContext(AuthContext);
   const user = authContext?.user || null;
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  // NUCLEAR OPTION: Clear ALL notification storage on mount
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem('demo_notifications');
+      localStorage.removeItem('demo_notifications');
+      console.log('[RealTimeContext] ✅ Cleared all notification storage');
+    } catch (e) {
+      console.warn('[RealTimeContext] Failed to clear notification storage:', e);
+    }
+  }, []);
   const [heartRate, setHeartRate] = useState<number | null>(null);
   const [steps, setSteps] = useState<number | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -274,49 +285,19 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
   }, [ws.isConnected, ws, refetchNotifications, refetchVitals, refetchMetrics, refetchWallet]);
 
   const dismissNotification = async (id: string) => {
-    // Notifications disabled - do nothing
+    // Notifications completely disabled - always clear everything
     setNotifications([]);
+    // Also clear storage to prevent any cached notifications
     try {
-      // await notificationService.markRead(id);
-      // setNotifications(prev => prev.filter(n => n.id !== id));
-      // queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    } catch (error) {
-      // If API call fails, just remove from local state
-      setNotifications(prev => prev.filter(n => n.id !== id));
-      // Also remove from demo storage so it doesn't come back on next refetch
-      const KEY = 'demo_notifications';
-      const removeFromStorage = (storage: Storage) => {
-        try {
-          const raw = storage.getItem(KEY);
-          if (!raw) return;
-          const parsed = JSON.parse(raw);
-          if (!Array.isArray(parsed)) return;
-          const next = parsed.filter((n: any) => n?.id !== id);
-          storage.setItem(KEY, JSON.stringify(next));
-        } catch {
-          // ignore
-        }
-      };
-      try { removeFromStorage(sessionStorage); } catch {}
-      try { removeFromStorage(localStorage); } catch {}
-    }
+      sessionStorage.removeItem('demo_notifications');
+      localStorage.removeItem('demo_notifications');
+    } catch {}
   };
 
   const addNotification = async (message: string, type: 'success' | 'info' | 'warning' = 'info') => {
-    try {
-      await notificationService.createNotification({ message, type });
-      // Refresh notifications
-      refetchNotifications();
-    } catch (error) {
-      // If API call fails, add to local state only
-      const newNotification: Notification = {
-        id: Date.now().toString(),
-        message,
-        type,
-        timestamp: new Date(),
-      };
-      setNotifications(prev => [newNotification, ...prev].slice(0, 10));
-    }
+    // Notifications completely disabled - do nothing
+    setNotifications([]);
+    // Don't create or store anything
   };
 
   const refresh = () => {
