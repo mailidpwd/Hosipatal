@@ -24,9 +24,9 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
       return undefined;
     }
   };
-  
+
   const userIdRef = React.useRef<string | undefined>(user?.id || getStoredUserId());
-  
+
   React.useEffect(() => {
     if (user?.id) {
       userIdRef.current = user.id;
@@ -108,7 +108,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
     } catch (e) {
       console.warn('[PatientDashboard] Failed to read from sessionStorage:', e);
     }
-    
+
     try {
       const l = localStorage.getItem('demo_pledges');
       if (l) {
@@ -120,7 +120,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
     } catch (e) {
       console.warn('[PatientDashboard] Failed to read from localStorage:', e);
     }
-    
+
     return [];
   };
 
@@ -139,7 +139,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
   // Use ref first (persists), then user.id, then sessionStorage as last resort
   const patientIdForQuery = userIdRef.current || user?.id || getStoredUserId();
   const isQueryEnabled = !authLoading && !!patientIdForQuery;
-  
+
   // Log when query state changes
   React.useEffect(() => {
     console.log('[PatientDashboard] 🎯 Query State:', {
@@ -165,33 +165,33 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
       console.log('[PatientDashboard] User ID:', user?.id);
       console.log('[PatientDashboard] User role:', user?.role);
       console.log('[PatientDashboard] userIdRef.current:', userIdRef.current);
-      
+
       try {
         // Short timeout (2 seconds) - if API doesn't respond quickly, check sessionStorage
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Request timeout')), 2000);
         });
-        
+
         const pledges = await Promise.race([
           userService.getMyPledges(patientId),
           timeoutPromise,
         ]) as Pledge[];
-        
+
         console.log('[PatientDashboard] 📦 Received pledges:', pledges);
         console.log('[PatientDashboard] 📦 Pledges array check:', Array.isArray(pledges), pledges?.length);
-        
+
         const result = Array.isArray(pledges) ? pledges : (pledges ? [pledges] : []);
-        
+
         // NEW: Sort by timestamp (newest first) and return only the most recent one
         const sorted = result.sort((a, b) => {
           const timeA = new Date(a.timestamp || 0).getTime();
           const timeB = new Date(b.timestamp || 0).getTime();
           return timeB - timeA; // Newest first
         });
-        
+
         // Return only the most recent pledge
         const mostRecent = sorted.length > 0 ? [sorted[0]] : [];
-        
+
         console.log('[PatientDashboard] ✅ Returning most recent pledge:', mostRecent.length);
         if (mostRecent.length > 0) {
           console.log('[PatientDashboard] Most recent pledge:', {
@@ -211,26 +211,26 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
           if (pledges.length > 0) {
             console.log('[PatientDashboard] 📦 All stored pledges:', pledges);
             console.log('[PatientDashboard] 🔍 Looking for patientId:', patientId);
-            
+
             // Normalize patient IDs for comparison (remove #, handle different formats)
             const normalizeId = (id: string | undefined | null): string => {
               if (!id) return '';
               return String(id).replace('#', '').trim();
             };
-            
+
             const normalizedPatientId = normalizeId(patientId);
-            
+
             // Filter pledges for this user - check multiple ID formats
             const userPledges = pledges.filter((p: Pledge) => {
               const pledgePatientId = normalizeId(p.patientId);
-              const matches = 
+              const matches =
                 pledgePatientId === normalizedPatientId ||
                 pledgePatientId === '83921' ||
                 normalizedPatientId === '83921' ||
                 pledgePatientId.includes('83921') ||
                 normalizedPatientId.includes(pledgePatientId) ||
                 pledgePatientId.includes(normalizedPatientId);
-              
+
               if (matches) {
                 console.log('[PatientDashboard] ✅ Matched pledge:', {
                   pledgeId: p.id,
@@ -242,7 +242,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
               }
               return matches;
             });
-            
+
             if (userPledges.length > 0) {
               // NEW: Sort by timestamp (newest first) and return only the most recent one
               const sorted = userPledges.sort((a, b) => {
@@ -250,7 +250,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
                 const timeB = new Date(b.timestamp || 0).getTime();
                 return timeB - timeA; // Newest first
               });
-              
+
               // Return only the most recent pledge
               const mostRecent = sorted.length > 0 ? [sorted[0]] : [];
               console.log('[PatientDashboard] ✅ Found', userPledges.length, 'pledge(s) in storage, returning most recent:', mostRecent.length);
@@ -280,8 +280,8 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
       }
     },
     enabled: isQueryEnabled,
-    refetchInterval: 5000, // Refetch every 5 seconds to catch new pledges quickly
-    staleTime: 0,
+    refetchInterval: 30000, // Refetch every 30 seconds - reduced from 5s to avoid spam
+    staleTime: 10000, // Consider data fresh for 10 seconds
     gcTime: 5 * 60 * 1000,
     retry: false, // Don't retry - use demo data immediately
     retryDelay: 1000,
@@ -301,19 +301,25 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
     }
   }, [pledgesQuery.isFetching, pledgesQuery.data, pledgesQuery.error]);
 
+  // Store refetch function in a ref to avoid dependency issues
+  const refetchPledgesRef = React.useRef(pledgesQuery.refetch);
+  React.useEffect(() => {
+    refetchPledgesRef.current = pledgesQuery.refetch;
+  }, [pledgesQuery.refetch]);
+
   // Listen for storage changes (when pledges are created in another tab/role)
   React.useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'demo_pledges') {
         console.log('[PatientDashboard] 🔔 Storage change detected, refetching pledges...');
-        pledgesQuery.refetch();
+        refetchPledgesRef.current();
       }
     };
 
     // Also listen for custom events (for same-tab updates)
     const handleCustomStorageChange = () => {
       console.log('[PatientDashboard] 🔔 Custom storage change detected, refetching pledges...');
-      pledgesQuery.refetch();
+      refetchPledgesRef.current();
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -324,7 +330,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('demo_pledges_updated', handleCustomStorageChange);
     };
-  }, [pledgesQuery]);
+  }, []); // Empty deps - use ref for refetch
 
 
 
@@ -348,42 +354,38 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
     mutationFn: (pledgeId: string) => userService.acceptPledge(pledgeId),
     onSuccess: () => {
       console.log('[PatientDashboard] ✅ Pledge accepted, invalidating queries');
-      // Invalidate all patient pledge queries
+      // Invalidate all patient pledge queries - this will trigger automatic refetch
       queryClient.invalidateQueries({ queryKey: ['patient', 'pledges'] });
       queryClient.invalidateQueries({ queryKey: ['patient', 'pledges', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['patient', 'pledges', userIdRef.current] });
-      // Force immediate refetch
+      // Force immediate refetch using the ref
       setTimeout(() => {
-        pledgesQuery.refetch();
+        refetchPledgesRef.current();
       }, 100);
     },
   });
 
-  // Force refetch when user changes to PATIENT or when component mounts/becomes visible
+  // Force refetch when user changes to PATIENT - runs only once on mount/user change
+  // Removed pledgesQuery from deps to prevent infinite loop
+  const hasRefetchedOnMount = React.useRef(false);
   React.useEffect(() => {
     const patientId = userIdRef.current || user?.id || getStoredUserId();
-    if (patientId && !authLoading) {
-      console.log('[PatientDashboard] 🔄 Invalidating pledges for patient:', patientId);
+    if (patientId && !authLoading && !hasRefetchedOnMount.current) {
+      hasRefetchedOnMount.current = true;
+      console.log('[PatientDashboard] 🔄 Initial pledges fetch for patient:', patientId);
+      // Just invalidate - the query will refetch automatically due to staleTime: 0
       queryClient.invalidateQueries({ queryKey: ['patient', 'pledges'] });
       queryClient.invalidateQueries({ queryKey: ['patient', 'pledges', patientId] });
-      // Force refetch after a short delay to ensure query is enabled
-      setTimeout(() => {
-        if (pledgesQuery.isEnabled) {
-          console.log('[PatientDashboard] 🔄 Manually refetching pledges');
-          pledgesQuery.refetch();
-        } else {
-          console.log('[PatientDashboard] ⚠️ Query not enabled, cannot refetch');
-        }
-      }, 300);
     }
-  }, [user?.role, user?.id, authLoading, queryClient, pledgesQuery]);
+  }, [user?.role, user?.id, authLoading, queryClient]);
 
   // Refetch when page becomes visible (for when navigating back from other pages)
+  // Uses ref to avoid dependency on pledgesQuery
   React.useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && (user?.role === 'PATIENT' || userIdRef.current)) {
         console.log('[PatientDashboard] 👁️ Page visible, refetching pledges');
-        pledgesQuery.refetch();
+        refetchPledgesRef.current();
       }
     };
 
@@ -395,7 +397,7 @@ export const PatientDashboard = ({ onNavigate }: { onNavigate: (page: Page) => v
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleVisibilityChange);
     };
-  }, [user?.role, pledgesQuery]);
+  }, [user?.role]); // Removed pledgesQuery from deps
 
   // Calculate days remaining for accepted pledges
   const getDaysRemaining = (pledge: Pledge): number | null => {
