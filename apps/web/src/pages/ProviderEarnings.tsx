@@ -33,8 +33,8 @@ export const ProviderEarnings = () => {
     }
   }, [providerId]);
   
-  const stableProviderId = providerId || providerIdRef.current || getStoredProviderId();
-  
+  const stableProviderId = providerId || providerIdRef.current || getStoredProviderId() || 'staff-1';
+
   const { recentTips, activePledges, isLoading: realtimeLoading } = useStaffRealTime(stableProviderId);
 
   // Fetch earnings data - filtered by providerId
@@ -42,12 +42,15 @@ export const ProviderEarnings = () => {
     queryKey: ['provider', 'earnings', stableProviderId],
     queryFn: () => providerService.getEarnings(stableProviderId),
     refetchInterval: 300000, // Refetch every 5 minutes
-    enabled: !!stableProviderId && !authLoading,
+    enabled: !authLoading, // Always enabled if auth is loaded
+    retry: false, // Don't retry - use demo data immediately on failure
+    staleTime: 0, // Always consider data fresh for demo mode
   });
 
-  const isLoading = authLoading || earningsLoading || realtimeLoading;
+  const isLoading = authLoading || (earningsLoading && !earningsData) || realtimeLoading;
 
-  if (isLoading && !earningsData) {
+  // Show loading only if we don't have any data yet and auth is still loading
+  if (isLoading && !earningsData && authLoading) {
     return (
       <div className="w-full max-w-[1600px] mx-auto p-4 md:p-6 lg:p-8 flex items-center justify-center min-h-[400px]">
         <LoadingSpinner />
