@@ -250,7 +250,7 @@ const AppreciationRewardModal = ({ data, onClose }: { data: AppreciationModalDat
             <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 uppercase">After Transaction</span>
               <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                {1,250 - selectedAmount} <span className="text-xs font-bold text-slate-400">RDM</span>
+                {(1250 - selectedAmount).toLocaleString()} <span className="text-xs font-bold text-slate-400">RDM</span>
               </span>
             </div>
           </div>
