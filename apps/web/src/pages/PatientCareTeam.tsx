@@ -110,6 +110,29 @@ const AppreciationRewardModal = ({ data, onClose }: { data: AppreciationModalDat
 
       console.log('[AppreciationModal] ✅ Tip sent successfully:', result);
 
+      // Store tip in sessionStorage/localStorage for demo mode persistence
+      try {
+        const storedS = sessionStorage.getItem('demo_tips');
+        const storedL = localStorage.getItem('demo_tips');
+        const sTips = storedS ? JSON.parse(storedS) : [];
+        const lTips = storedL ? JSON.parse(storedL) : [];
+        
+        // Add the new tip
+        const newTip = {
+          ...result,
+          recipientName: data.name,
+        };
+        sTips.push(newTip);
+        lTips.push(newTip);
+        
+        sessionStorage.setItem('demo_tips', JSON.stringify(sTips));
+        localStorage.setItem('demo_tips', JSON.stringify(lTips));
+        
+        console.log('[AppreciationModal] ✅ Stored tip in sessionStorage/localStorage for demo mode');
+      } catch (e) {
+        console.warn('[AppreciationModal] Failed to store tip in storage:', e);
+      }
+
       // Invalidate provider queries to refresh the dashboard
       // CRITICAL: Invalidate with providerId to ensure it refreshes for Dr. Sarah Smith (staff-1)
       queryClient.invalidateQueries({ queryKey: ['provider', 'recentTips'] });
@@ -117,7 +140,7 @@ const AppreciationRewardModal = ({ data, onClose }: { data: AppreciationModalDat
       queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard', 'staff-1'] });
       // Refresh sent tips list
-      queryClient.invalidateQueries({ queryKey: ['patient', 'sentTips'] });
+      queryClient.invalidateQueries({ queryKey: ['patient', 'sentTips', userId] });
       
       console.log('[AppreciationModal] ✅ Invalidated provider queries for staff-1 (Dr. Sarah Smith)');
 
@@ -304,10 +327,33 @@ const ExperienceRatingModal = ({ onClose }: { onClose: () => void }) => {
         rating: averageRating,
       });
 
-      await userService.sendTip(userId, rdmAmount, {
+      const result = await userService.sendTip(userId, rdmAmount, {
         type: 'rating',
         rating: averageRating,
       });
+
+      // Store tip in sessionStorage/localStorage for demo mode persistence
+      try {
+        const storedS = sessionStorage.getItem('demo_tips');
+        const storedL = localStorage.getItem('demo_tips');
+        const sTips = storedS ? JSON.parse(storedS) : [];
+        const lTips = storedL ? JSON.parse(storedL) : [];
+        
+        // Add the new tip
+        const newTip = {
+          ...result,
+          recipientName: 'Dr. Sarah Smith',
+        };
+        sTips.push(newTip);
+        lTips.push(newTip);
+        
+        sessionStorage.setItem('demo_tips', JSON.stringify(sTips));
+        localStorage.setItem('demo_tips', JSON.stringify(lTips));
+        
+        console.log('[RatingModal] ✅ Stored tip in sessionStorage/localStorage for demo mode');
+      } catch (e) {
+        console.warn('[RatingModal] Failed to store tip in storage:', e);
+      }
 
       // Invalidate provider queries to refresh the dashboard
       // CRITICAL: Invalidate with providerId to ensure it refreshes for Dr. Sarah Smith (staff-1)
@@ -316,7 +362,7 @@ const ExperienceRatingModal = ({ onClose }: { onClose: () => void }) => {
       queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard', 'staff-1'] });
       // Refresh sent tips list
-      queryClient.invalidateQueries({ queryKey: ['patient', 'sentTips'] });
+      queryClient.invalidateQueries({ queryKey: ['patient', 'sentTips', userId] });
       
       console.log('[RatingModal] ✅ Invalidated provider queries for staff-1 (Dr. Sarah Smith)');
 
@@ -633,11 +679,23 @@ export const PatientCareTeam = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Get userId from sessionStorage as fallback
+  const getUserId = () => {
+    if (user?.id) return user.id;
+    try {
+      return sessionStorage.getItem('userId') || undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const userId = getUserId();
+
   // Fetch sent tips history
   const { data: sentTips = [], isLoading: sentTipsLoading, refetch: refetchSentTips } = useQuery({
-    queryKey: ['patient', 'sentTips', user?.id],
-    queryFn: () => userService.getMySentTips(user?.id),
-    enabled: !!user?.id,
+    queryKey: ['patient', 'sentTips', userId],
+    queryFn: () => userService.getMySentTips(userId),
+    enabled: !!userId,
     refetchInterval: 30000,
   });
 
@@ -821,7 +879,7 @@ export const PatientCareTeam = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-sm font-bold text-slate-900 dark:text-white">To Dr. Sarah Smith</span>
+                                            <span className="text-sm font-bold text-slate-900 dark:text-white">To {(tip as any).recipientName || 'Dr. Sarah Smith'}</span>
                                             <span className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-800">
                                                 -{tip.amount} RDM
                                             </span>

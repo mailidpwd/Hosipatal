@@ -236,6 +236,34 @@ export class UserService extends BaseService {
     type?: string;
     rating?: number;
   }>> {
+    // Check sessionStorage/localStorage first for demo mode
+    try {
+      const storedS = sessionStorage.getItem('demo_tips');
+      const storedL = localStorage.getItem('demo_tips');
+      const sTips = storedS ? JSON.parse(storedS) : [];
+      const lTips = storedL ? JSON.parse(storedL) : [];
+      
+      // Merge and filter by patientId
+      const allTips = [...sTips, ...lTips];
+      if (patientId) {
+        const normalizedPatientId = patientId.replace('#', '');
+        const filteredTips = allTips.filter((tip: any) => {
+          const tipPatientId = String(tip.patientId || '').replace('#', '');
+          return tipPatientId === normalizedPatientId || tipPatientId === patientId;
+        });
+        
+        if (filteredTips.length > 0) {
+          console.log('[UserService] ✅ Found tips in storage for demo mode:', filteredTips.length);
+          return filteredTips.sort((a: any, b: any) => 
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('[UserService] Failed to read tips from storage:', e);
+    }
+    
+    // Fallback to API
     return this.handleRequest(async () => {
       const response = await (client as any).provider.getMySentTips({ patientId });
       return response || [];

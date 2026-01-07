@@ -1251,6 +1251,10 @@ export const appRouter = {
       }).optional())
       .handler(async ({ input }) => {
         const limit = input?.limit || 10;
+        
+        // Check sessionStorage/localStorage for demo mode tips (from browser context)
+        // Note: This runs on server, so we can't directly access browser storage
+        // But we'll merge tips from tipsStore which gets updated when sendTip is called
         let tips = [...tipsStore];
 
         console.log('[Provider API] getRecentWishes called:', {
