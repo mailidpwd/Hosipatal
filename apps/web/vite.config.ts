@@ -7,6 +7,16 @@ import { defineConfig, loadEnv } from "vite";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   const isDev = mode === 'development';
+  
+  // IMPORTANT: Read from process.env directly for Vercel compatibility
+  // This ensures Vercel environment variables are picked up during build
+  // Priority: process.env (Vercel) > env file (local dev)
+  const geminiApiKey = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || '';
+  
+  if (!geminiApiKey && !isDev) {
+    console.warn('[Vite Config] ⚠️ GEMINI_API_KEY not found. NLP Engine will use demo mode.');
+  }
+  
   return {
     plugins: [
       tailwindcss(), 
@@ -40,8 +50,9 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
     },
     define: {
-      'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      // Use the API key from process.env (Vercel) or env file (local)
+      'process.env.API_KEY': JSON.stringify(geminiApiKey),
+      'process.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
     },
   };
 });
