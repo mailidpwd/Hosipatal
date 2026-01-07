@@ -104,12 +104,9 @@ const getDemoPatientsData = (providerId: string) => {
   };
 };
 
-// Demo patient profile data for pledge modal and contact info
+// Demo patient profile data for pledge modal
 const getDemoPatientProfile = (patientId: string) => {
-  const normalizedId = String(patientId).replace('#', '').trim();
-  
-  // Michael Chen
-  if (normalizedId === '83921') {
+  if (patientId === '83921' || patientId === '#83921' || patientId?.includes('83921')) {
     return {
       id: '83921',
       name: 'Michael Chen',
@@ -141,41 +138,6 @@ const getDemoPatientProfile = (patientId: string) => {
       },
     };
   }
-  
-  // Sarah Jenkins
-  if (normalizedId === '99201') {
-    return {
-      id: '99201',
-      name: 'Sarah Jenkins',
-      age: 38,
-      gender: 'Female',
-      patientId: '#99201',
-      diagnosis: 'Diabetes T2',
-      adherenceScore: 65,
-      rdmEarnings: 890,
-      status: 'critical',
-      contactNumber: '+1-555-0145',
-      email: 'sarah.jenkins@rdmhealth.patient',
-    };
-  }
-  
-  // David Kim
-  if (normalizedId === '1129') {
-    return {
-      id: '1129',
-      name: 'David Kim',
-      age: 52,
-      gender: 'Male',
-      patientId: '#1129',
-      diagnosis: 'Heart Disease',
-      adherenceScore: 88,
-      rdmEarnings: 2100,
-      status: 'stable',
-      contactNumber: '+1-555-0167',
-      email: 'david.kim@rdmhealth.patient',
-    };
-  }
-  
   return null;
 };
 
@@ -1697,11 +1659,13 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
                           email: formData.email,
                           password: formData.password,
                           patientId: formData.patientId,
-                          providerId: '1', // Current doctor/provider
+                          providerId: stableProviderId, // Use stable provider ID
                         });
 
                         // Show success message
                         alert(`Patient created successfully!\n\nPatient ID: ${formData.patientId}\nEmail: ${formData.email}\nPassword: ${formData.password}\n\nCredentials will be sent via SMS to ${formData.contactNumber}`);
+                        
+                        console.log('[ProviderPatients] ✅ Patient created with providerId:', stableProviderId);
 
                         setShowAddPatientModal(false);
                         setCurrentStep(1);
