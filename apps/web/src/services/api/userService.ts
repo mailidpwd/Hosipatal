@@ -234,9 +234,22 @@ export class UserService extends BaseService {
         console.warn('[UserService] API call failed, using demo data for sendTip:', error?.message);
         
         // Demo mode fallback - return mock tip data
+        // Get patient name from storage or use default
+        let patientName = 'Michael Chen'; // Default for demo
+        try {
+          const userStr = sessionStorage.getItem('user');
+          if (userStr) {
+            const user = JSON.parse(userStr);
+            patientName = user.name || patientName;
+          }
+        } catch (e) {
+          console.warn('[UserService] Could not get patient name from storage:', e);
+        }
+        
         const demoTip = {
           id: `tip-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           patientId: patientId,
+          patientName: patientName, // Required for "My Sent Appreciation" display
           amount: amount,
           message: options?.message,
           type: options?.type || 'tip',

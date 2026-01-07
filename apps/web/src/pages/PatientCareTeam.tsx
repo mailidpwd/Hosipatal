@@ -117,16 +117,20 @@ const AppreciationRewardModal = ({ data, onClose }: { data: AppreciationModalDat
         const sTips = storedS ? JSON.parse(storedS) : [];
         const lTips = storedL ? JSON.parse(storedL) : [];
         
-        // Add the new tip
+        // Add the new tip - ensure it has patientName for display
         const newTip = {
           ...result,
           recipientName: data.name,
+          patientName: result.patientName || user?.name || 'Michael Chen', // Ensure patientName exists
         };
         sTips.push(newTip);
         lTips.push(newTip);
         
         sessionStorage.setItem('demo_tips', JSON.stringify(sTips));
         localStorage.setItem('demo_tips', JSON.stringify(lTips));
+        
+        // Dispatch event to trigger immediate refresh
+        window.dispatchEvent(new Event('demo_tips_updated'));
         
         console.log('[AppreciationModal] ✅ Stored tip in sessionStorage/localStorage for demo mode');
       } catch (e) {
@@ -139,22 +143,32 @@ const AppreciationRewardModal = ({ data, onClose }: { data: AppreciationModalDat
       queryClient.invalidateQueries({ queryKey: ['provider', 'recentTips', 'staff-1'] }); // Dr. Sarah Smith's ID
       queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard'] });
       queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard', 'staff-1'] });
-      // Refresh sent tips list
+      // Refresh sent tips list IMMEDIATELY and dispatch event
       queryClient.invalidateQueries({ queryKey: ['patient', 'sentTips', userId] });
+      
+      // Dispatch event to trigger immediate refresh of sent tips
+      window.dispatchEvent(new Event('demo_tips_updated'));
+      
+      // Force refetch the sent tips query immediately
+      try {
+        await queryClient.refetchQueries({ queryKey: ['patient', 'sentTips', userId] });
+        console.log('[AppreciationModal] ✅ Refetched sent tips query');
+      } catch (refetchError) {
+        console.warn('[AppreciationModal] Failed to refetch sent tips:', refetchError);
+      }
       
       console.log('[AppreciationModal] ✅ Invalidated provider queries for staff-1 (Dr. Sarah Smith)');
 
-      // toast.success(`Thank you message sent! ${selectedAmount} RDM sent to ${data.name}`);
+      // Show success feedback
+      alert(`✅ Thank you sent!\n\n${selectedAmount} RDM sent to ${data.name}${message.trim() ? '\n\nMessage: "' + message.trim() + '"' : ''}`);
       
       // Reset form
       setMessage('');
       setSelectedAmount(data?.amount || 10);
       
-      // Close modal immediately to show it worked
-      setTimeout(() => {
-        onClose();
-        setIsSubmitting(false);
-      }, 300);
+      // Close modal and reset state
+      setIsSubmitting(false);
+      onClose();
     } catch (error: any) {
       console.error('[AppreciationModal] ❌ Error sending tip:', error);
       console.error('[AppreciationModal] Error details:', {
@@ -698,6 +712,22 @@ export const PatientCareTeam = () => {
     enabled: !!userId,
     refetchInterval: 30000,
   });
+
+  // Listen for demo_tips_updated event to refresh immediately
+  React.useEffect(() => {
+    const handleTipsUpdate = () => {
+      console.log('[PatientCareTeam] demo_tips_updated event received, refetching sent tips');
+      refetchSentTips();
+    };
+    
+    window.addEventListener('demo_tips_updated', handleTipsUpdate);
+    window.addEventListener('storage', handleTipsUpdate); // Also listen for storage changes
+    
+    return () => {
+      window.removeEventListener('demo_tips_updated', handleTipsUpdate);
+      window.removeEventListener('storage', handleTipsUpdate);
+    };
+  }, [refetchSentTips]);
 
   // Calculate total sent
   const totalSent = sentTips.reduce((sum, tip) => sum + tip.amount, 0);
