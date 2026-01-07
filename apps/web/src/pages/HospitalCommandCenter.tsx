@@ -14,6 +14,8 @@ const getDemoCommandCenterData = (): CommandCenterData => {
     safetyHygiene: 89,
     staffEngagement: 85,
     esgCharity: 78,
+    patientRdmTotal: 125000,
+    staffRdmTotal: 485000,
     careRadar: {
       accuracy: 88,
       empathy: 85,
@@ -275,6 +277,53 @@ export const HospitalCommandCenter = () => {
                         <option>🧪 Technicians</option>
                         <option>🤒 Patients</option>
                     </select>
+                </div>
+            </div>
+        </div>
+
+        {/* RDM Totals Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-xl p-6 shadow-lg border border-teal-400/20 relative overflow-hidden group hover:shadow-xl transition-all">
+                <div className="absolute right-0 top-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity">
+                    <Icon name="people" className="text-6xl text-white" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Icon name="wallet" className="text-white text-xl" />
+                        <p className="text-sm font-bold text-white/90 uppercase tracking-wide">Patient RDM</p>
+                    </div>
+                    <div className="flex items-end justify-between mt-2">
+                        <div>
+                            <h3 className="text-4xl font-bold text-white mt-1">{commandData.patientRdmTotal.toLocaleString()}</h3>
+                            <p className="text-sm text-white/80 font-medium mt-1">Total Earned</p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <Icon name="trending_up" className="text-white/80 text-2xl mb-1" />
+                            <span className="text-xs text-white/70 font-medium">All Patients</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl p-6 shadow-lg border border-indigo-400/20 relative overflow-hidden group hover:shadow-xl transition-all">
+                <div className="absolute right-0 top-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity">
+                    <Icon name="groups" className="text-6xl text-white" />
+                </div>
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Icon name="account_balance_wallet" className="text-white text-xl" />
+                        <p className="text-sm font-bold text-white/90 uppercase tracking-wide">Staff RDM</p>
+                    </div>
+                    <div className="flex items-end justify-between mt-2">
+                        <div>
+                            <h3 className="text-4xl font-bold text-white mt-1">{commandData.staffRdmTotal.toLocaleString()}</h3>
+                            <p className="text-sm text-white/80 font-medium mt-1">Total Earned</p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <Icon name="trending_up" className="text-white/80 text-2xl mb-1" />
+                            <span className="text-xs text-white/70 font-medium">All Staff</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
