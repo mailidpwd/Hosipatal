@@ -39,6 +39,8 @@ const getDemoPatientsData = (providerId: string) => {
         adherenceScore: 75,
         rdmEarnings: 1250,
         status: 'critical' as const,
+        contactNumber: '+1-555-0123', // Demo contact number
+        email: 'michael.chen@rdmhealth.patient',
         avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
       },
       {
@@ -51,6 +53,8 @@ const getDemoPatientsData = (providerId: string) => {
         adherenceScore: 65,
         rdmEarnings: 890,
         status: 'critical' as const,
+        contactNumber: '+1-555-0145', // Demo contact number
+        email: 'sarah.jenkins@rdmhealth.patient',
         avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASAnY87FJ5OkyNB5WG4FKNYFJ883CuUQ22G2YHq91lDtv8vYETphUQUHuQc-HDuR651yMslSiRyt-dPUVof1lBJKmFKN0iJQNX5Nk_cGr88XPMAP3L58u19c57TE9XHMtYbPoiYZVcrPIL9hk5MhT2Qkzsq1BdvWNlToQva6bw_dZZ5-mJ_2D7VlSzgG9RYv_VubmD-1TNs_iLLzsY1j1SvO0F6Klf0tiAqn_AuzpQJjhTuGoIEenEgNQj0xthNRANtj8QqvPsOXPH',
       },
       {
@@ -63,6 +67,8 @@ const getDemoPatientsData = (providerId: string) => {
         adherenceScore: 88,
         rdmEarnings: 2100,
         status: 'stable' as const,
+        contactNumber: '+1-555-0167', // Demo contact number
+        email: 'david.kim@rdmhealth.patient',
         avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
       },
       {
@@ -75,6 +81,8 @@ const getDemoPatientsData = (providerId: string) => {
         adherenceScore: 92,
         rdmEarnings: 1850,
         status: 'stable' as const,
+        contactNumber: '+1-555-0189', // Demo contact number
+        email: 'emily.rodriguez@rdmhealth.patient',
         avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuASAnY87FJ5OkyNB5WG4FKNYFJ883CuUQ22G2YHq91lDtv8vYETphUQUHuQc-HDuR651yMslSiRyt-dPUVof1lBJKmFKN0iJQNX5Nk_cGr88XPMAP3L58u19c57TE9XHMtYbPoiYZVcrPIL9hk5MhT2Qkzsq1BdvWNlToQva6bw_dZZ5-mJ_2D7VlSzgG9RYv_VubmD-1TNs_iLLzsY1j1SvO0F6Klf0tiAqn_AuzpQJjhTuGoIEenEgNQj0xthNRANtj8QqvPsOXPH',
       },
       {
@@ -87,6 +95,8 @@ const getDemoPatientsData = (providerId: string) => {
         adherenceScore: 70,
         rdmEarnings: 1100,
         status: 'at-risk' as const,
+        contactNumber: '+1-555-0201', // Demo contact number
+        email: 'james.wilson@rdmhealth.patient',
         avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBIRqf1C3W41bQ_OyYVAvYrNB1nxLeTpHLj9lVvJTV2cLA50I7ZcqqPsHgi_a7d72pwjd6e6MqQ9gHv-hNvH7A_r8EE3UPcQsPliBXk4QqXsCxuyJjO6-LbsDSkaMqFQAPIw2oDkYGDJgR6SC4FH849l2xaT1ALDbO6wjZW6rC3GYfXtL-oepz4bz9ufOZ7o8s6k4Sv_QIIwLcR1ks9oQjjc2CyxsxaT7lbxUBGmmPEVLlvesO1jqVNpCpnImHPlHaWqPH8OdvG8694',
       },
     ],
@@ -94,9 +104,12 @@ const getDemoPatientsData = (providerId: string) => {
   };
 };
 
-// Demo patient profile data for pledge modal
+// Demo patient profile data for pledge modal and contact info
 const getDemoPatientProfile = (patientId: string) => {
-  if (patientId === '83921' || patientId === '#83921' || patientId?.includes('83921')) {
+  const normalizedId = String(patientId).replace('#', '').trim();
+  
+  // Michael Chen
+  if (normalizedId === '83921') {
     return {
       id: '83921',
       name: 'Michael Chen',
@@ -128,6 +141,41 @@ const getDemoPatientProfile = (patientId: string) => {
       },
     };
   }
+  
+  // Sarah Jenkins
+  if (normalizedId === '99201') {
+    return {
+      id: '99201',
+      name: 'Sarah Jenkins',
+      age: 38,
+      gender: 'Female',
+      patientId: '#99201',
+      diagnosis: 'Diabetes T2',
+      adherenceScore: 65,
+      rdmEarnings: 890,
+      status: 'critical',
+      contactNumber: '+1-555-0145',
+      email: 'sarah.jenkins@rdmhealth.patient',
+    };
+  }
+  
+  // David Kim
+  if (normalizedId === '1129') {
+    return {
+      id: '1129',
+      name: 'David Kim',
+      age: 52,
+      gender: 'Male',
+      patientId: '#1129',
+      diagnosis: 'Heart Disease',
+      adherenceScore: 88,
+      rdmEarnings: 2100,
+      status: 'stable',
+      contactNumber: '+1-555-0167',
+      email: 'david.kim@rdmhealth.patient',
+    };
+  }
+  
   return null;
 };
 
@@ -404,9 +452,41 @@ export const ProviderPatients: React.FC<ProviderPatientsProps> = ({ onNavigate }
   // Create patient mutation
   const createPatientMutation = useMutation({
     mutationFn: async (patientData: any) => {
-      return await providerService.createPatient(patientData);
+      const result = await providerService.createPatient(patientData);
+      
+      // Store patient in sessionStorage/localStorage for demo mode
+      try {
+        const storedS = sessionStorage.getItem('demo_patients');
+        const storedL = localStorage.getItem('demo_patients');
+        const sPatients = storedS ? JSON.parse(storedS) : [];
+        const lPatients = storedL ? JSON.parse(storedL) : [];
+        
+        // Add the new patient
+        sPatients.push(result);
+        lPatients.push(result);
+        
+        sessionStorage.setItem('demo_patients', JSON.stringify(sPatients));
+        localStorage.setItem('demo_patients', JSON.stringify(lPatients));
+        
+        console.log('[ProviderPatients] ✅ Stored new patient in sessionStorage/localStorage for demo mode');
+      } catch (e) {
+        console.warn('[ProviderPatients] Failed to store patient in storage:', e);
+      }
+      
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (newPatient) => {
+      // Optimistically update the patients list
+      queryClient.setQueryData(['provider', 'patients', stableProviderId, searchQuery, statusFilter], (oldData: any) => {
+        if (!oldData) return { patients: [newPatient], total: 1 };
+        return {
+          ...oldData,
+          patients: [newPatient, ...oldData.patients],
+          total: oldData.total + 1,
+        };
+      });
+      
+      // Invalidate queries to refresh
       queryClient.invalidateQueries({ queryKey: ['provider', 'patients'] });
       queryClient.invalidateQueries({ queryKey: ['provider', 'dashboard'] });
     },
