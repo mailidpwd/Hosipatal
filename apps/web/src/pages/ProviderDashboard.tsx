@@ -18,7 +18,7 @@ const getDemoDashboardData = (providerId: string): DashboardData => {
     criticalPatients: [
       {
         id: 'alert-1',
-        patientId: '83921',
+        patientId: '#83921',
         patientName: 'Michael Chen',
         type: 'bp_spike',
         severity: 'high' as const,
@@ -28,7 +28,6 @@ const getDemoDashboardData = (providerId: string): DashboardData => {
         name: 'Michael Chen',
         age: 45,
         gender: 'Male',
-        patientId: '#83921',
         diagnosis: 'Hypertension',
         adherenceScore: 75,
         rdmEarnings: 0,
@@ -37,7 +36,7 @@ const getDemoDashboardData = (providerId: string): DashboardData => {
       },
       {
         id: 'alert-2',
-        patientId: '99201',
+        patientId: '#99201',
         patientName: 'Sarah Jenkins',
         type: 'missed_meds',
         severity: 'moderate' as const,
@@ -47,7 +46,6 @@ const getDemoDashboardData = (providerId: string): DashboardData => {
         name: 'Sarah Jenkins',
         age: 38,
         gender: 'Female',
-        patientId: '#99201',
         diagnosis: 'Diabetes T2',
         adherenceScore: 65,
         rdmEarnings: 0,
