@@ -53,6 +53,18 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
 
   // Initialize demo balance from localStorage or create default
   const getDemoBalance = (userRole?: string): number => {
+    // Set default based on user role (if available) or default to patient balance
+    const defaultBalance = userRole === 'PROVIDER' || userRole === 'ADMIN' 
+      ? DEFAULT_PROVIDER_BALANCE 
+      : DEFAULT_PATIENT_BALANCE;
+    
+    // For patients, always use 250 (reset any old stored values)
+    if (userRole !== 'PROVIDER' && userRole !== 'ADMIN') {
+      localStorage.setItem(DEMO_BALANCE_KEY, DEFAULT_PATIENT_BALANCE.toString());
+      return DEFAULT_PATIENT_BALANCE;
+    }
+    
+    // For providers/admins, check localStorage first, then use default
     const stored = localStorage.getItem(DEMO_BALANCE_KEY);
     if (stored) {
       const parsed = parseFloat(stored);
@@ -60,10 +72,6 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
         return parsed;
       }
     }
-    // Set default based on user role (if available) or default to patient balance
-    const defaultBalance = userRole === 'PROVIDER' || userRole === 'ADMIN' 
-      ? DEFAULT_PROVIDER_BALANCE 
-      : DEFAULT_PATIENT_BALANCE;
     localStorage.setItem(DEMO_BALANCE_KEY, defaultBalance.toString());
     return defaultBalance;
   };
@@ -132,6 +140,16 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
   const { data: wallet, isLoading: walletLoading, refetch: refetchWallet } = useQuery({
     queryKey: ['wallet', 'balance', user?.id],
     queryFn: async () => {
+      // For patients, always return 250
+      if (user?.role !== 'PROVIDER' && user?.role !== 'ADMIN') {
+        return {
+          balance: DEFAULT_PATIENT_BALANCE,
+          weeklyEarnings: 120,
+          totalEarnings: DEFAULT_PATIENT_BALANCE,
+          history: [],
+        };
+      }
+      
       try {
         const data = await walletService.getBalance();
         // Always use demo balance for demo purposes (when API returns 0 or null)
@@ -202,6 +220,14 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
   }, [metrics]);
 
   useEffect(() => {
+    // For patients, always use 250 regardless of API response
+    if (user?.role !== 'PROVIDER' && user?.role !== 'ADMIN') {
+      setWalletBalance(DEFAULT_PATIENT_BALANCE);
+      saveDemoBalance(DEFAULT_PATIENT_BALANCE);
+      return;
+    }
+    
+    // For providers/admins, use API balance or demo balance
     if (wallet?.balance !== undefined && wallet.balance !== null) {
       const balance = wallet.balance;
       setWalletBalance(balance);
@@ -219,8 +245,12 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
 
   // Initialize demo balance on mount or when user changes
   useEffect(() => {
-    // Only initialize if balance is null (initial state)
-    if (walletBalance === null) {
+    // For patients, always ensure balance is 250 (reset any old values)
+    if (user?.role !== 'PROVIDER' && user?.role !== 'ADMIN') {
+      setWalletBalance(DEFAULT_PATIENT_BALANCE);
+      saveDemoBalance(DEFAULT_PATIENT_BALANCE);
+    } else if (walletBalance === null) {
+      // For providers/admins, initialize if balance is null
       const demoBalance = getDemoBalance(user?.role);
       setWalletBalance(demoBalance);
     }
