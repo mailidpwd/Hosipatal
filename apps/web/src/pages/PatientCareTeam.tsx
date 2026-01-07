@@ -749,7 +749,7 @@ export const PatientCareTeam = () => {
                     <Icon name="account_balance_wallet" className="text-lg" />
                 </div>
                 <div>
-                    <span className="block text-base md:text-lg font-black text-slate-900 dark:text-white leading-none">1,250 <span className="text-xs font-bold text-slate-400">RDM</span></span>
+                    <span className="block text-base md:text-lg font-black text-slate-900 dark:text-white leading-none">250 <span className="text-xs font-bold text-slate-400">RDM</span></span>
                     <span className="block text-[10px] font-bold text-emerald-500">▲ +120 this week</span>
                 </div>
             </div>

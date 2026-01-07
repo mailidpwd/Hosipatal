@@ -567,7 +567,7 @@ export const PatientGoals = () => {
                         <Icon name="lock" className="text-2xl" />
                     </div>
 
-                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight relative z-10">1,000 RDM</h3>
+                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight relative z-10">500 RDM</h3>
                     <span className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 uppercase tracking-widest mb-4 relative z-10">Locked in Vault</span>
 
                     <div className="flex items-start gap-1.5 text-left relative z-10 justify-center">

@@ -14,7 +14,7 @@ const getDemoDashboardData = (providerId: string): DashboardData => {
     totalPatients: 5,
     criticalCount: 2,
     rating: 4.8,
-    rdmBalance: 12500,
+    rdmBalance: 1250,
     criticalPatients: [
       {
         id: 'alert-1',
@@ -368,7 +368,7 @@ export const ProviderDashboard = () => {
             <Icon name="currency_bitcoin" className="text-5xl text-primary" />
           </div>
           <div className="flex items-start justify-between mb-2 relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">Balance</p>
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider">Earned</p>
             <Icon name="account_balance_wallet" className="text-primary text-lg" />
           </div>
           <div className="relative z-10">

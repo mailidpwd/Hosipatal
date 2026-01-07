@@ -48,8 +48,8 @@ export const RealTimeProvider = ({ children }: { children?: ReactNode }) => {
 
   // Demo balance management - persists across refreshes
   const DEMO_BALANCE_KEY = 'rdm_demo_balance';
-  const DEFAULT_PATIENT_BALANCE = 7500; // Realistic demo balance for patients
-  const DEFAULT_PROVIDER_BALANCE = 10000; // Realistic demo balance for providers
+  const DEFAULT_PATIENT_BALANCE = 250; // Demo balance for patients
+  const DEFAULT_PROVIDER_BALANCE = 1250; // Demo balance for providers
 
   // Initialize demo balance from localStorage or create default
   const getDemoBalance = (userRole?: string): number => {
