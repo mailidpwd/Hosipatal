@@ -18,7 +18,13 @@ if (env.NODE_ENV === "development") {
   app.use(logger());
 }
 
-// CORS configuration
+// CORS configuration - allow multiple production origins
+const ALLOWED_ORIGINS = [
+  env.CORS_ORIGIN, // Primary origin from env
+  "https://hosipatal-web.vercel.app",
+  "https://rdm-healthcare-web.vercel.app",
+];
+
 app.use(
   "/*",
   cors({
@@ -29,7 +35,11 @@ app.use(
           return origin || env.CORS_ORIGIN;
         }
       }
-      // In production, use the configured CORS_ORIGIN
+      // In production, check against allowed origins list
+      if (origin && ALLOWED_ORIGINS.includes(origin)) {
+        return origin;
+      }
+      // Fallback to env CORS_ORIGIN
       return env.CORS_ORIGIN;
     },
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],

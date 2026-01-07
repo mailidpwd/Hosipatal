@@ -252,6 +252,7 @@ export const ProviderClaims = () => {
         
         setIsProcessing(true);
         setOutputVisible(false); // Reset for animation
+        setErrorMsg(null); // Clear any previous errors
 
         // Check for API key
         const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY || '';
@@ -261,7 +262,7 @@ export const ProviderClaims = () => {
             console.warn('[ProviderClaims] ⚠️ No Gemini API key found. Using demo processing.');
             setErrorMsg('Gemini API key not configured. Using demo mode.');
             
-            // Use demo data based on note text content
+            // Use demo data based on note text content - faster response
             setTimeout(() => {
                 const noteLower = noteText.toLowerCase();
                 let demoMedications: any[] = [];
@@ -339,35 +340,45 @@ export const ProviderClaims = () => {
                 setOutputVisible(true);
                 setIsProcessing(false);
                 setErrorMsg(null);
-            }, 2000);
+            }, 1500); // Reduced from 2000ms to 1500ms for faster demo response
             return;
         }
 
         try {
-            // Process claim through API (which will use AI)
-            const claimResult = await claimsService.processClaim({
-                noteText,
-                patientId: selectedPatientId || undefined,
+            // Add timeout wrapper for Gemini API call
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Processing timeout. Please try again.')), 15000); // 15 second timeout
             });
 
+            // Process claim through API (which will use AI) - don't wait for this
+            const claimPromise = claimsService.processClaim({
+                noteText,
+                patientId: selectedPatientId || undefined,
+            }).catch(err => {
+                console.warn('[ProviderClaims] Claim API call failed, continuing with Gemini:', err);
+                return null; // Don't block on this
+            });
+
+            // Start Gemini processing immediately (don't wait for claim API)
             const genAI = new GoogleGenerativeAI(apiKey);
             const model = genAI.getGenerativeModel({ 
                 model: 'gemini-1.5-flash',
                 generationConfig: {
                     responseMimeType: 'application/json',
+                    temperature: 0.3, // Lower temperature for more consistent results
                 }
             });
             
             // Using Gemini for fast JSON extraction
             const prompt = `Analyze the following clinical note and extract:
-                1. Medications (name, strength, frequency, route, duration, instructions). Infer standard medical instructions if missing.
-                2. Most likely ICD-10 Diagnosis code, description, and category (e.g., Cardiovascular, Endocrine, Respiratory).
-                3. Most appropriate CPT Service code, description, level (e.g., Level 3, Level 4), and typical time duration.
-                4. Estimated reimbursement amount based on Medicare fee schedule (e.g., $127.50).
-                
+1. Medications (name, strength, frequency, route, duration, instructions). Infer standard medical instructions if missing.
+2. Most likely ICD-10 Diagnosis code, description, and category (e.g., Cardiovascular, Endocrine, Respiratory).
+3. Most appropriate CPT Service code, description, level (e.g., Level 3, Level 4), and typical time duration.
+4. Estimated reimbursement amount based on Medicare fee schedule (e.g., $127.50).
+
 Clinical Note: "${noteText}"
 
-Return a JSON object with this structure:
+Return ONLY a valid JSON object with this structure (no markdown, no code blocks):
 {
   "medications": [
     {
@@ -394,13 +405,26 @@ Return a JSON object with this structure:
   "reimbursement": "string (format: $XXX.XX)"
 }`;
 
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
+            // Race between Gemini API and timeout
+            const geminiPromise = model.generateContent(prompt).then(result => {
+                const response = result.response;
+                const text = response.text();
+                
+                // Clean up JSON if it has markdown code blocks
+                let cleanedText = text.trim();
+                if (cleanedText.startsWith('```json')) {
+                    cleanedText = cleanedText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                } else if (cleanedText.startsWith('```')) {
+                    cleanedText = cleanedText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                }
+                
+                return JSON.parse(cleanedText || "{}");
+            });
 
-            const text = response.text();
-            const data = JSON.parse(text || "{}");
+            // Wait for either Gemini response or timeout
+            const data = await Promise.race([geminiPromise, timeoutPromise]) as any;
 
-            // Update State with AI Data
+            // Update State with AI Data IMMEDIATELY
             if (data.medications && Array.isArray(data.medications)) {
                 setMedications(data.medications.map((med: any, index: number) => ({
                     id: Date.now() + index,
@@ -426,7 +450,6 @@ Return a JSON object with this structure:
                     category: data.diagnosis.category || 'Cardiovascular'
                 });
             } else {
-                // Keep default if no diagnosis found
                 setDiagnosis({ 
                     code: 'I10', 
                     desc: 'Essential (primary) hypertension',
@@ -442,7 +465,6 @@ Return a JSON object with this structure:
                     time: data.cpt.time || '15-20 minutes'
                 });
             } else {
-                // Keep default if no CPT found
                 setCpt({ 
                     code: '99213', 
                     desc: 'Office or other outpatient visit for the evaluation and management of an established patient',
@@ -454,7 +476,6 @@ Return a JSON object with this structure:
             if (data.reimbursement) {
                 setReimbursement(data.reimbursement);
             } else {
-                // Calculate realistic reimbursement based on CPT code
                 const reimbursementMap: { [key: string]: string } = {
                     '99211': '$45.00',
                     '99212': '$75.00',
@@ -465,25 +486,30 @@ Return a JSON object with this structure:
                 setReimbursement(reimbursementMap[data.cpt?.code || '99213'] || '$127.50');
             }
 
-            // Set realistic place of service and modifiers based on CPT code
             setPlaceOfService('11 - Office');
-            // Add modifiers for certain scenarios if needed
             const cptModifiers: string[] = [];
             setModifiers(cptModifiers);
 
+            // CRITICAL: Set output visible BEFORE stopping processing to ensure UI updates
             setOutputVisible(true);
             
-            // Refresh submissions after processing
-            refetchSubmissions();
+            // Small delay to ensure state updates are rendered
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            setIsProcessing(false);
+            setErrorMsg(null);
+            
+            // Refresh submissions after processing (don't wait for it)
+            refetchSubmissions().catch(err => console.warn('[ProviderClaims] Failed to refetch submissions:', err));
 
         } catch (error: any) {
             console.error("AI Processing Error:", error);
             const errorMessage = error?.message || "Unknown error";
             
             // If API key issue or 403 error, fall back to demo mode
-            if (errorMessage.includes('API key') || errorMessage.includes('403') || errorMessage.includes('unregistered callers')) {
-                console.warn('[ProviderClaims] API key issue detected, falling back to demo mode');
-                setErrorMsg('API key issue detected. Using demo mode.');
+            if (errorMessage.includes('API key') || errorMessage.includes('403') || errorMessage.includes('unregistered callers') || errorMessage.includes('timeout')) {
+                console.warn('[ProviderClaims] API issue detected, falling back to demo mode');
+                setErrorMsg('API issue detected. Using demo mode.');
                 
                 // Use demo data as fallback
                 const noteLower = noteText.toLowerCase();
@@ -542,12 +568,12 @@ Return a JSON object with this structure:
                 setCpt(demoCpt);
                 setReimbursement(demoReimbursement);
                 setOutputVisible(true);
+                setIsProcessing(false);
                 setErrorMsg(null);
             } else {
-                setErrorMsg(`Failed to process clinical notes: ${errorMessage}. Please try again or check API configuration.`);
+                setErrorMsg(`Failed to process: ${errorMessage}. Please try again.`);
+                setIsProcessing(false);
             }
-        } finally {
-            setIsProcessing(false);
         }
     }
 
@@ -669,7 +695,7 @@ Return a JSON object with this structure:
                             <button className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"><Icon name="share" className="text-lg" /></button>
                         </div>
                     </div>
-                    <div className={`bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm flex flex-col h-[606px] transition-all duration-500 ${outputVisible || !isProcessing ? 'opacity-100' : 'opacity-50 grayscale'}`}>
+                    <div className={`bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm flex flex-col h-[606px] transition-all duration-500 ${outputVisible ? 'opacity-100 scale-100' : isProcessing ? 'opacity-50 scale-[0.98]' : 'opacity-30 scale-[0.95]'}`}>
                         <div className="flex border-b border-slate-200 dark:border-slate-700 shrink-0">
                             <button 
                                 onClick={() => setActiveTab('prescription')}
